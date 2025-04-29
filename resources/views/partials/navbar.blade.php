@@ -19,8 +19,8 @@
       </li>
       @endif
     </ul>
-    <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
-      <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
+    <div class="px-0 navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="flex-row navbar-nav ms-auto align-items-center justify-content-end">
         <li class="nav-item dropdown">
           <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" data-bs-toggle="dropdown"
             aria-expanded="false">
@@ -28,25 +28,25 @@
           </a>
           <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop2">
             <div class="message-body">
-              <div class="d-flex align-items-center gap-2 dropdown-item">
+              <div class="gap-2 d-flex align-items-center dropdown-item">
                 <i class="ti ti-user fs-6"></i>
                 <p class="mb-0 fs-3">{{ auth()->user()->name }} ({{ auth()->user()->role }})</p>
               </div>
-              <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
+              <a href="{{ route('profile.edit') }}" class="gap-2 d-flex align-items-center dropdown-item">
                 <i class="ti ti-user fs-6"></i>
                 <p class="mb-0 fs-3">My Profile</p>
               </a>
-              <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
+              <a href="javascript:void(0)" class="gap-2 d-flex align-items-center dropdown-item">
                 <i class="ti ti-mail fs-6"></i>
                 <p class="mb-0 fs-3">My Account</p>
               </a>
-              <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
+              <a href="javascript:void(0)" class="gap-2 d-flex align-items-center dropdown-item">
                 <i class="ti ti-list-check fs-6"></i>
                 <p class="mb-0 fs-3">My Task</p>
               </a>
               <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="btn btn-outline-primary mx-3 mt-2 d-block">Logout</button>
+                <button type="submit" class="mx-3 mt-2 btn btn-outline-primary d-block">Logout</button>
               </form>
             </div>
           </div>

@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Developer\DashboardController as DeveloperDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,4 +25,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('products/{product}/update-image-order', [ProductController::class, 'updateImageOrder'])->name('products.updateImageOrder');
     Route::resource('categories', CategoryController::class);
     Route::resource('rentals', RentalController::class);
+
+    // Route untuk profile admin
+    // Route untuk profile admin
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });

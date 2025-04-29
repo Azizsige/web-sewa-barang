@@ -16,13 +16,28 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $statusFilter = $request->query('status', 'all');
+        $keyword = $request->query('keyword', '');
         $query = Product::with('category', 'primaryImage');
 
+        // Filter berdasarkan status
         if ($statusFilter !== 'all') {
             $query->where('status', $statusFilter);
         }
 
-        $products = $query->get();
+        // Filter berdasarkan keyword (cari di nama produk atau nama kategori)
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', '%' . $keyword . '%')
+                    ->orWhereHas('category', function ($q) use ($keyword) {
+                        $q->where('name', 'like', '%' . $keyword . '%');
+                    });
+            });
+        }
+
+        // Pagination: 10 produk per halaman
+        $products = $query->paginate(10);
+        $products->appends(['status' => $statusFilter, 'keyword' => $keyword]); // Pastikan query string tetap ada di pagination
+
         return view('products.index', compact('products', 'statusFilter'));
     }
 
@@ -218,16 +233,35 @@ class ProductController extends Controller
             ->exists();
 
         if ($activeRentals) {
+            // Jika request adalah AJAX, return JSON
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk tidak dapat dihapus karena masih digunakan di rental aktif.',
+                ], 400);
+            }
+            // Jika non-AJAX, redirect dengan flash message
             return redirect()->back()->with('error', 'Produk tidak dapat dihapus karena masih digunakan di rental aktif.');
         }
 
+        // Hapus gambar terkait
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->image_path);
             $image->delete();
         }
 
+        // Hapus produk
         $product->delete();
 
+        // Jika request adalah AJAX, return JSON
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk berhasil dihapus.',
+            ], 200);
+        }
+
+        // Jika non-AJAX, redirect dengan flash message
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
     }
 

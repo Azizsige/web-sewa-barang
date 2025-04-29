@@ -40,6 +40,11 @@ class Product extends Model
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
+    public function rentals()
+    {
+        return $this->hasMany(Rental::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

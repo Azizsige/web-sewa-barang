@@ -93,6 +93,65 @@
           <span class="hide-menu">Manajemen Toko</span>
         </li>
         <li class="sidebar-item">
+          <a class="sidebar-link {{ Route::is('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}"
+            aria-expanded="false">
+            <span>
+              <i class="ti ti-box"></i>
+            </span>
+            <span class="hide-menu">Produk</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link {{ Route::is('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}"
+            aria-expanded="false">
+            <span>
+              <i class="ti ti-tags"></i>
+            </span>
+            <span class="hide-menu">Kategori Produk</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link {{ Route::is('rentals.*') ? 'active' : '' }}" href="{{ route('rentals.index') }}"
+            aria-expanded="false">
+            <span>
+              <i class="ti ti-history"></i>
+            </span>
+            <span class="hide-menu">Riwayat Sewa</span>
+          </a>
+        </li>
+        <li class="nav-small-cap">
+          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+          <span class="hide-menu">Pengaturan</span>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="#" aria-expanded="false">
+            <span>
+              <i class="ti ti-settings"></i>
+            </span>
+            <span class="hide-menu">Pengaturan Toko</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="#" aria-expanded="false">
+            <span>
+              <i class="ti ti-brand-whatsapp"></i>
+            </span>
+            <span class="hide-menu">Tanya via WA</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="#" aria-expanded="false">
+            <span>
+              <i class="ti ti-lock"></i>
+            </span>
+            <span class="hide-menu">Ganti Password</span>
+          </a>
+        </li>
+        <li class="nav-small-cap">
+          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+          <span class="hide-menu">Manajemen Toko</span>
+        </li>
+        <li class="sidebar-item">
           <a class="sidebar-link" href="#" aria-expanded="false">
             <span>
               <i class="ti ti-store"></i>

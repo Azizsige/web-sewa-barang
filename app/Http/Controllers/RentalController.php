@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Rental;
 use App\Models\Product;
+use App\Models\Rental;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RentalController extends Controller
 {
@@ -31,41 +34,90 @@ class RentalController extends Controller
     {
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
-            'customer_email' => 'nullable|email|max:255',
+            'customer_email' => 'nullable|email',
             'customer_phone' => 'nullable|string|max:15',
             'product_id' => 'required|exists:products,id',
             'start_date' => 'required|date|after_or_equal:today',
-            'duration' => 'required|integer|min:1',
+            'end_date' => 'required|date|after:start_date',
         ]);
 
-        $product = Product::findOrFail($validated['product_id']);
-        if ($product->status !== 'active') {
-            return redirect()->back()->with('error', 'Produk yang dipilih tidak aktif.')->withInput();
+        try {
+            // Gunakan transaksi untuk mencegah race condition
+            $rental = DB::transaction(function () use ($request) {
+                $product = Product::lockForUpdate()->findOrFail($request->product_id);
+
+                if ($product->status !== 'active') {
+                    throw new \Exception('Produk yang dipilih tidak aktif.');
+                }
+
+                // Cek tanggal bertabrakan
+                $start_date = \Carbon\Carbon::parse($request->start_date);
+                $end_date = \Carbon\Carbon::parse($request->end_date);
+                $overlappingRentals = Rental::where('product_id', $product->id)
+                    ->where('status', 'ongoing')
+                    ->where(function ($query) use ($start_date, $end_date) {
+                        $query->whereBetween('start_date', [$start_date, $end_date])
+                            ->orWhereBetween('end_date', [$start_date, $end_date])
+                            ->orWhere(function ($q) use ($start_date, $end_date) {
+                                $q->where('start_date', '<=', $start_date)
+                                    ->where('end_date', '>=', $end_date);
+                            });
+                    })
+                    ->exists();
+
+                if ($overlappingRentals) {
+                    throw new \Exception('Produk sudah disewa pada rentang tanggal tersebut.');
+                }
+
+                // Cek stok
+                if ($product->stock <= 0) {
+                    throw new \Exception('Stok produk tidak cukup.');
+                }
+
+                // Hitung total_price
+                $duration = $start_date->diffInDays($end_date);
+                $total_price = $product->price * $duration;
+
+                // Buat rental
+                $rental = Rental::create([
+                    'customer_name' => $request->customer_name,
+                    'customer_email' => $request->customer_email,
+                    'customer_phone' => $request->customer_phone,
+                    'product_id' => $request->product_id,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'total_price' => $total_price,
+                    'status' => 'ongoing',
+                ]);
+
+                // Kurangi stok
+                $product->decrement('stock');
+
+                return $rental;
+            });
+
+            return redirect('/rentals')->with('success', 'Rental berhasil ditambahkan.');
+        } catch (ModelNotFoundException $e) {
+            return redirect()->back()->withErrors(['product_id' => 'Produk tidak ditemukan.']);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        $total_price = $product->price * $validated['duration'];
-
-        $rentalData = array_merge($validated, [
-            'total_price' => $total_price,
-            'status' => 'ongoing',
-        ]);
-
-        $rental = Rental::create($rentalData);
-
-        $product->decrement('stock');
-
-        return redirect()->route('rentals.index')->with('success', 'Rental berhasil ditambahkan.');
     }
 
     public function edit(Rental $rental)
     {
-        $userRole = auth()->user()->role;
-
-        if ($userRole === 'admin' && in_array($rental->status, ['completed', 'canceled'])) {
-            return redirect()->route('rentals.index')->with('error', 'Rental ini sudah selesai atau dibatalkan, Anda tidak dapat mengeditnya. Hubungi Super User untuk perubahan.');
+        if (Auth::user()->role === 'admin' && in_array($rental->status, ['completed', 'canceled'])) {
+            return redirect()->back()->withErrors(['error' => 'Rental ini sudah selesai atau dibatalkan, Anda tidak dapat mengeditnya. Hubungi Super User untuk perubahan.']);
         }
 
-        $products = Product::active()->where('stock', '>', 0)->orWhere('id', $rental->product_id)->with('primaryImage')->get();
+        $products = Product::active()
+            ->where(function ($query) use ($rental) {
+                $query->where('stock', '>', 0)
+                    ->orWhere('id', $rental->product_id);
+            })
+            ->with('primaryImage')
+            ->get();
+
         return view('rentals.edit', compact('rental', 'products'));
     }
 
@@ -73,54 +125,189 @@ class RentalController extends Controller
     {
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
-            'customer_email' => 'nullable|email|max:255',
+            'customer_email' => 'nullable|email',
             'customer_phone' => 'nullable|string|max:15',
             'product_id' => 'required|exists:products,id',
-            'start_date' => 'required|date',
-            'duration' => 'required|integer|min:1',
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after:start_date',
             'status' => 'required|in:pending,ongoing,completed,canceled',
         ]);
 
-        $oldProductId = $rental->product_id;
-        $oldStatus = $rental->status;
-        $newStatus = $validated['status'];
-        $newProductId = $validated['product_id'];
+        try {
+            // Gunakan transaksi untuk mencegah race condition
+            $rental = DB::transaction(function () use ($request, $rental) {
+                $product = Product::lockForUpdate()->findOrFail($request->product_id);
 
-        $product = Product::findOrFail($newProductId);
-        if ($product->status !== 'active') {
-            return redirect()->back()->with('error', 'Produk yang dipilih tidak aktif.')->withInput();
+                if ($product->status !== 'active') {
+                    throw new \Exception('Produk yang dipilih tidak aktif.');
+                }
+
+                // Cek tanggal bertabrakan (kecuali untuk rental ini sendiri)
+                $start_date = \Carbon\Carbon::parse($request->start_date);
+                $end_date = \Carbon\Carbon::parse($request->end_date);
+                $overlappingRentals = Rental::where('product_id', $product->id)
+                    ->where('status', 'ongoing')
+                    ->where('id', '!=', $rental->id)
+                    ->where(function ($query) use ($start_date, $end_date) {
+                        $query->whereBetween('start_date', [$start_date, $end_date])
+                            ->orWhereBetween('end_date', [$start_date, $end_date])
+                            ->orWhere(function ($q) use ($start_date, $end_date) {
+                                $q->where('start_date', '<=', $start_date)
+                                    ->where('end_date', '>=', $end_date);
+                            });
+                    })
+                    ->exists();
+
+                if ($overlappingRentals) {
+                    throw new \Exception('Produk sudah disewa pada rentang tanggal tersebut.');
+                }
+
+                // Atur stok berdasarkan perubahan status atau produk
+                if ($rental->status === 'ongoing') {
+                    if (in_array($request->status, ['completed', 'canceled'])) {
+                        $rental->product->increment('stock');
+                    } elseif ($rental->product_id !== $request->product_id) {
+                        $rental->product->increment('stock');
+                        // Cek stok produk baru sebelum decrement
+                        if ($product->stock <= 0) {
+                            throw new \Exception('Stok produk yang dipilih tidak cukup.');
+                        }
+                        $product->decrement('stock');
+                    }
+                } elseif ($rental->status === 'pending') {
+                    if ($request->status === 'ongoing') {
+                        if ($product->stock <= 0) {
+                            throw new \Exception('Stok produk yang dipilih tidak cukup.');
+                        }
+                        $product->decrement('stock');
+                    }
+                } elseif (in_array($rental->status, ['completed', 'canceled'])) {
+                    if ($request->status === 'ongoing') {
+                        if ($product->stock <= 0) {
+                            throw new \Exception('Stok produk yang dipilih tidak cukup.');
+                        }
+                        $product->decrement('stock');
+                    }
+                }
+
+                // Hitung total_price
+                $duration = $start_date->diffInDays($end_date);
+                $total_price = $product->price * $duration;
+
+                // Update rental
+                $rental->update([
+                    'customer_name' => $request->customer_name,
+                    'customer_email' => $request->customer_email,
+                    'customer_phone' => $request->customer_phone,
+                    'product_id' => $request->product_id,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'total_price' => $total_price,
+                    'status' => $request->status,
+                ]);
+
+                return $rental;
+            });
+
+            return redirect('/rentals')->with('success', 'Rental berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        $validated['total_price'] = $product->price * $validated['duration'];
-
-        if ($oldStatus === 'ongoing') {
-            if ($newStatus === 'completed' || $newStatus === 'canceled') {
-                Product::findOrFail($oldProductId)->increment('stock');
-            } elseif ($oldProductId !== $newProductId) {
-                Product::findOrFail($oldProductId)->increment('stock');
-                Product::findOrFail($newProductId)->decrement('stock');
-            }
-        } elseif ($oldStatus === 'pending' && $newStatus === 'ongoing') {
-            Product::findOrFail($newProductId)->decrement('stock');
-        } elseif ($oldStatus === 'pending' && $newStatus === 'canceled') {
-            // Tidak perlu ubah stok
-        } elseif (in_array($oldStatus, ['completed', 'canceled']) && $newStatus === 'ongoing') {
-            Product::findOrFail($newProductId)->decrement('stock');
-        }
-
-        $rental->update($validated);
-
-        return redirect()->route('rentals.index')->with('success', 'Rental berhasil diperbarui.');
     }
 
     public function destroy(Rental $rental)
     {
+        // Blokir penghapusan kalau status completed atau canceled
+        if (in_array($rental->status, ['completed', 'canceled'])) {
+            return redirect()->back()->withErrors(['error' => 'Rental yang sudah selesai atau dibatalkan tidak dapat dihapus.']);
+        }
+
         if ($rental->status === 'ongoing') {
             $rental->product->increment('stock');
         }
 
         $rental->delete();
 
-        return redirect()->route('rentals.index')->with('success', 'Rental berhasil dihapus.');
+        return redirect('/rentals')->with('success', 'Rental berhasil dihapus.');
+    }
+
+    public function createPublic()
+    {
+        $products = Product::active()->where('stock', '>', 0)->with('primaryImage')->get();
+        return view('welcome', compact('products'));
+    }
+
+    public function storePublic(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'nullable|email',
+            'customer_phone' => 'nullable|string|max:15',
+            'product_id' => 'required|exists:products,id',
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after:start_date',
+        ]);
+
+        try {
+            // Gunakan transaksi untuk mencegah race condition
+            $rental = DB::transaction(function () use ($request) {
+                $product = Product::lockForUpdate()->findOrFail($request->product_id);
+
+                if ($product->status !== 'active') {
+                    throw new \Exception('Produk yang dipilih tidak aktif.');
+                }
+
+                // Cek tanggal bertabrakan
+                $start_date = \Carbon\Carbon::parse($request->start_date);
+                $end_date = \Carbon\Carbon::parse($request->end_date);
+                $overlappingRentals = Rental::where('product_id', $product->id)
+                    ->where('status', 'ongoing')
+                    ->where(function ($query) use ($start_date, $end_date) {
+                        $query->whereBetween('start_date', [$start_date, $end_date])
+                            ->orWhereBetween('end_date', [$start_date, $end_date])
+                            ->orWhere(function ($q) use ($start_date, $end_date) {
+                                $q->where('start_date', '<=', $start_date)
+                                    ->where('end_date', '>=', $end_date);
+                            });
+                    })
+                    ->exists();
+
+                if ($overlappingRentals) {
+                    throw new \Exception('Produk sudah disewa pada rentang tanggal tersebut.');
+                }
+
+                // Cek stok
+                if ($product->stock <= 0) {
+                    throw new \Exception('Stok produk tidak cukup.');
+                }
+
+                // Hitung total_price
+                $duration = $start_date->diffInDays($end_date);
+                $total_price = $product->price * $duration;
+
+                // Buat rental
+                $rental = Rental::create([
+                    'customer_name' => $request->customer_name,
+                    'customer_email' => $request->customer_email,
+                    'customer_phone' => $request->customer_phone,
+                    'product_id' => $request->product_id,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'total_price' => $total_price,
+                    'status' => 'ongoing',
+                ]);
+
+                // Kurangi stok
+                $product->decrement('stock');
+
+                return $rental;
+            });
+
+            return redirect('/')->with('success', 'Rental berhasil ditambahkan. Silakan login untuk melihat detail.');
+        } catch (ModelNotFoundException $e) {
+            return redirect()->back()->withErrors(['product_id' => 'Produk tidak ditemukan.']);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }

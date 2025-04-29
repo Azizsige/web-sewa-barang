@@ -3,36 +3,46 @@
 @section('content')
 <div class="row">
   <div class="col-12">
-    <h1 class="fw-bold fs-3 mb-4">Tambah Kategori Produk</h1>
-    <div class="card shadow-sm">
+    <h1 class="mb-4 fw-bold fs-3">Tambah Kategori Produk</h1>
+    <div class="shadow-sm card">
       <div class="card-body">
         <form method="POST" action="{{ route('categories.store') }}" enctype="multipart/form-data" id="category-form">
           @csrf
           <div class="mb-4">
-            <label for="name" class="form-label text-gray-700">Nama Kategori</label>
+            <label for="name" class="text-gray-700 form-label">Nama Kategori</label>
             <input type="text" name="name" id="name" class="form-control @error('name') is-invalid @enderror"
               value="{{ old('name') }}">
             @error('name')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="name-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="name-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="slug" class="form-label text-gray-700">Slug (Otomatis)</label>
-            <input type="text" name="slug" id="slug" class="form-control bg-gray-100" readonly>
-            <p class="text-sm text-gray-500 mt-1">Slug akan otomatis di-generate dari nama kategori.</p>
+            <label for="description" class="text-gray-700 form-label">Deskripsi</label>
+            <textarea name="description" id="description"
+              class="form-control @error('description') is-invalid @enderror"
+              rows="3">{{ old('description') }}</textarea>
+            @error('description')
+            <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+            <div id="description-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="image" class="form-label text-gray-700">Gambar Kategori</label>
+            <label for="slug" class="text-gray-700 form-label">Slug (Otomatis)</label>
+            <input type="text" name="slug" id="slug" class="bg-gray-100 form-control" readonly>
+            <p class="mt-1 text-sm text-gray-500">Slug akan otomatis di-generate dari nama kategori.</p>
+          </div>
+          <div class="mb-4">
+            <label for="image" class="text-gray-700 form-label">Gambar Kategori</label>
             <div
-              class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500">
+              class="relative p-6 text-center border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500">
               <input type="file" name="image" id="image" accept="image/*"
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              <div id="image-preview" class="mt-2 hidden">
-                <img id="preview-img" src="#" alt="Preview" class="max-w-full h-auto rounded-lg" />
+              <div id="image-preview" class="hidden mt-2">
+                <img id="preview-img" src="#" alt="Preview" class="h-auto max-w-full rounded-lg" />
               </div>
               <div id="default-message">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18">
                   </path>
@@ -41,7 +51,7 @@
                 <p class="mt-1 text-xs text-gray-500">Hanya file gambar (jpg, png, gif), maksimal 2MB</p>
               </div>
               <div id="loading-spinner" class="hidden mt-2">
-                <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+                <svg class="w-8 h-8 mx-auto text-blue-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
                   viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
@@ -50,13 +60,13 @@
               </div>
             </div>
             @error('image')
-            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+            <div class="mt-1 text-sm text-red-500">{{ $message }}</div>
             @enderror
-            <div id="image-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="image-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="flex space-x-3">
-            <button type="submit" class="btn btn-primary px-4 py-2">Simpan</button>
-            <a href="{{ route('categories.index') }}" class="btn btn-secondary px-4 py-2">Batal</a>
+            <button type="submit" class="px-4 py-2 btn btn-primary">Simpan</button>
+            <a href="{{ route('categories.index') }}" class="px-4 py-2 btn btn-secondary">Batal</a>
           </div>
         </form>
       </div>
@@ -76,12 +86,14 @@ function generateSlug(name) {
 // Validasi form sebelum submit
 const form = document.getElementById('category-form');
 const nameInput = document.getElementById('name');
+const descriptionInput = document.getElementById('description');
 const slugInput = document.getElementById('slug');
 const imageInput = document.getElementById('image');
 const nameError = document.getElementById('name-error');
+const descriptionError = document.getElementById('description-error');
 const imageError = document.getElementById('image-error');
 
-if (form && nameInput && slugInput && imageInput && nameError && imageError) {
+if (form && nameInput && descriptionInput && slugInput && imageInput && nameError && descriptionError && imageError) {
     // Update slug secara real-time saat user ketik
     nameInput.addEventListener('input', function() {
         console.log('Input event triggered, name:', this.value);
@@ -129,8 +141,10 @@ if (form && nameInput && slugInput && imageInput && nameError && imageError) {
 
         // Reset error state
         nameError.classList.add('hidden');
+        descriptionError.classList.add('hidden');
         imageError.classList.add('hidden');
         nameInput.classList.remove('border-red-500');
+        descriptionInput.classList.remove('border-red-500');
         imageInput.parentElement.classList.remove('border-red-500');
 
         // Cek nama kategori
@@ -140,6 +154,17 @@ if (form && nameInput && slugInput && imageInput && nameError && imageError) {
             nameInput.classList.add('border-red-500');
             nameInput.focus();
             hasError = true;
+        }
+
+        // Cek deskripsi (opsional, tapi kalau diisi, maksimal 500 karakter)
+        if (descriptionInput.value && descriptionInput.value.length > 500) {
+            descriptionError.textContent = 'Deskripsi maksimal 500 karakter.';
+            descriptionError.classList.remove('hidden');
+            descriptionInput.classList.add('border-red-500');
+            if (!hasError) {
+                descriptionInput.focus();
+                hasError = true;
+            }
         }
 
         // Cek gambar
@@ -159,7 +184,7 @@ if (form && nameInput && slugInput && imageInput && nameError && imageError) {
             return;
         }
 
-        // Tampilkan SweetAlert loading
+        // Tampilkan SweetAlert loading dan loading spinner di input gambar
         Swal.fire({
             title: 'Menyimpan...',
             text: 'Harap tunggu, sedang menyimpan kategori.',
@@ -168,12 +193,30 @@ if (form && nameInput && slugInput && imageInput && nameError && imageError) {
                 Swal.showLoading();
             }
         });
+
+        // Tampilkan loading spinner di input gambar
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const defaultMessage = document.getElementById('default-message');
+        const imagePreview = document.getElementById('image-preview');
+
+        if (loadingSpinner && defaultMessage && imagePreview) {
+            loadingSpinner.classList.remove('hidden');
+            defaultMessage.classList.add('hidden');
+            imagePreview.classList.add('hidden');
+        } else {
+            console.error('Submit elements not found:', { loadingSpinner, defaultMessage, imagePreview });
+        }
     });
 
     // Hapus pesan error pas user isi input
     nameInput.addEventListener('input', function() {
         nameError.classList.add('hidden');
         nameInput.classList.remove('border-red-500');
+    });
+
+    descriptionInput.addEventListener('input', function() {
+        descriptionError.classList.add('hidden');
+        descriptionInput.classList.remove('border-red-500');
     });
 
     // Handle preview gambar dan validasi
@@ -227,24 +270,8 @@ if (form && nameInput && slugInput && imageInput && nameError && imageError) {
             imageInput.parentElement.classList.remove('border-red-500');
         }
     });
-
-    // Tampilkan loading spinner di preview gambar (opsional, biar konsisten)
-    form.addEventListener('submit', function() {
-        if (!nameInput.value.trim() || !imageInput.files.length) return;
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const defaultMessage = document.getElementById('default-message');
-        const imagePreview = document.getElementById('image-preview');
-
-        if (loadingSpinner && defaultMessage && imagePreview) {
-            loadingSpinner.classList.remove('hidden');
-            defaultMessage.classList.add('hidden');
-            imagePreview.classList.add('hidden');
-        } else {
-            console.error('Submit elements not found:', { loadingSpinner, defaultMessage, imagePreview });
-        }
-    });
 } else {
-    console.error('Elements not found:', { form, nameInput, slugInput, imageInput, nameError, imageError });
+    console.error('Elements not found:', { form, nameInput, descriptionInput, slugInput, imageInput, nameError, descriptionError, imageError });
 }
 </script>
 @endsection

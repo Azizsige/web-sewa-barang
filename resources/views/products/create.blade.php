@@ -177,11 +177,13 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
         @endif
 
         @if ($errors->any())
+            let errorMessages = [];
+            @foreach ($errors->all() as $error)
+                errorMessages.push('{{ $error }}');
+            @endforeach
             Swal.fire({
                 title: 'Gagal!',
-                html: `@foreach ($errors->all() as $error)
-                    {{ $error }}<br>
-                @endforeach`,
+                html: errorMessages.join('<br>'),
                 icon: 'error',
                 confirmButtonText: 'OK'
             });

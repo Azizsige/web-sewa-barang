@@ -20,7 +20,7 @@
         @if($products->count() > 0)
         <div class="card shadow-sm">
             <div class="card-body">
-                <table class="table table-bordered">
+                <table class="table table-bordered" id="product-table">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -35,7 +35,7 @@
                     </thead>
                     <tbody>
                         @foreach($products as $index => $product)
-                        <tr>
+                        <tr data-product-id="{{ $product->id }}">
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $product->name }}</td>
                             <td>{{ $product->category ? $product->category->name : 'Kategori Tidak Ditemukan' }}</td>
@@ -65,7 +65,8 @@
                                         {{ $product->status === 'active' ? 'Non-Aktifkan' : 'Aktifkan' }}
                                     </button>
                                     <form action="{{ route('products.destroy', $product) }}" method="POST"
-                                        class="delete-form" data-product-name="{{ $product->name }}">
+                                        class="delete-form" data-product-name="{{ $product->name }}"
+                                        data-product-id="{{ $product->id }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
@@ -98,6 +99,9 @@
             event.preventDefault();
 
             const productName = form.getAttribute('data-product-name');
+            const productId = form.getAttribute('data-product-id');
+            const url = form.getAttribute('action');
+            const token = document.querySelector('meta[name="csrf-token"]')?.content || form.querySelector('input[name="_token"]').value;
 
             Swal.fire({
                 title: `Hapus Produk "${productName}"?`,
@@ -111,7 +115,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
-                        title: 'Menyimpan...',
+                        title: 'Menghapus...',
                         text: 'Harap tunggu, sedang menghapus produk.',
                         allowOutsideClick: false,
                         didOpen: () => {
@@ -119,7 +123,61 @@
                         }
                     });
 
-                    form.submit();
+                    fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        return response.json().then(data => ({
+                            status: response.status,
+                            body: data
+                        }));
+                    })
+                    .then(({ status, body }) => {
+                        Swal.close();
+
+                        if (status >= 200 && status < 300) {
+                            const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+                            if (row) row.remove();
+
+                            const tbody = document.querySelector('#product-table tbody');
+                            if (tbody.children.length === 0) {
+                                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Belum ada produk.</td></tr>';
+                            }
+
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: 'Produk berhasil dihapus.',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            throw new Error(body.message || 'Terjadi kesalahan saat menghapus produk.');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.close();
+                        console.error('Error:', error);
+
+                        let errorMessage = 'Terjadi kesalahan saat menghapus produk. Silakan coba lagi atau hubungi admin.';
+                        if (error.message.includes('still used in an active rental')) {
+                            errorMessage = 'Produk tidak dapat dihapus karena masih digunakan di rental aktif.';
+                        } else if (error.message.includes('method is not supported')) {
+                            errorMessage = 'Terjadi kesalahan sistem saat menghapus produk. Silakan hubungi admin.';
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
                 }
             });
         });

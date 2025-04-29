@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductImage;
+use App\Models\Rental;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -47,10 +48,29 @@ class ProductController extends Controller
                 'images.*' => 'required|image|mimes:jpeg,png,gif|max:2048',
                 'is_bundle' => 'nullable|boolean',
                 'status' => 'required|in:active,inactive',
+            ], [
+                'category_id.required' => 'Kategori wajib dipilih.',
+                'category_id.exists' => 'Kategori yang dipilih tidak valid.',
+                'name.required' => 'Nama produk wajib diisi.',
+                'name.unique' => 'Nama produk sudah digunakan. Silakan gunakan nama lain.',
+                'slug.required' => 'Slug wajib diisi.',
+                'slug.unique' => 'Slug sudah digunakan. Silakan gunakan slug lain.',
+                'price.required' => 'Harga wajib diisi.',
+                'price.numeric' => 'Harga harus berupa angka.',
+                'price.min' => 'Harga tidak boleh negatif.',
+                'stock.required' => 'Stok wajib diisi.',
+                'stock.integer' => 'Stok harus berupa angka bulat.',
+                'stock.min' => 'Stok tidak boleh negatif.',
+                'images.*.required' => 'Setidaknya satu gambar wajib diunggah.',
+                'images.*.image' => 'File harus berupa gambar.',
+                'images.*.mimes' => 'Hanya file gambar (jpg, png, gif) yang diperbolehkan.',
+                'images.*.max' => 'Ukuran gambar maksimal 2MB per file.',
+                'status.required' => 'Status wajib dipilih.',
+                'status.in' => 'Status tidak valid.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('ProductController@store: Validation failed', ['errors' => $e->errors()]);
-            throw $e;
+            return redirect()->back()->with('error', 'Gagal menyimpan produk. Silakan periksa data yang Anda masukkan.')->withInput();
         }
 
         Log::info('ProductController@store: Validated data', $validated);
@@ -88,7 +108,7 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'image_path' => $path,
                 'is_primary' => $index === 0,
-                'order' => $index, // Set order berdasarkan urutan upload
+                'order' => $index,
             ]);
         }
 
@@ -123,6 +143,26 @@ class ProductController extends Controller
             'primary_image_id' => 'nullable|exists:product_images,id',
             'delete_images' => 'nullable|array',
             'delete_images.*' => 'exists:product_images,id',
+        ], [
+            'category_id.required' => 'Kategori wajib dipilih.',
+            'category_id.exists' => 'Kategori yang dipilih tidak valid.',
+            'name.required' => 'Nama produk wajib diisi.',
+            'name.unique' => 'Nama produk sudah digunakan. Silakan gunakan nama lain.',
+            'slug.required' => 'Slug wajib diisi.',
+            'slug.unique' => 'Slug sudah digunakan. Silakan gunakan slug lain.',
+            'price.required' => 'Harga wajib diisi.',
+            'price.numeric' => 'Harga harus berupa angka.',
+            'price.min' => 'Harga tidak boleh negatif.',
+            'stock.required' => 'Stok wajib diisi.',
+            'stock.integer' => 'Stok harus berupa angka bulat.',
+            'stock.min' => 'Stok tidak boleh negatif.',
+            'images.*.image' => 'File harus berupa gambar.',
+            'images.*.mimes' => 'Hanya file gambar (jpg, png, gif) yang diperbolehkan.',
+            'images.*.max' => 'Ukuran gambar maksimal 2MB per file.',
+            'status.required' => 'Status wajib dipilih.',
+            'status.in' => 'Status tidak valid.',
+            'primary_image_id.exists' => 'Gambar utama yang dipilih tidak valid.',
+            'delete_images.*.exists' => 'Gambar yang akan dihapus tidak valid.',
         ]);
 
         $validated['is_bundle'] = $request->has('is_bundle') ? 1 : 0;
@@ -150,7 +190,7 @@ class ProductController extends Controller
                     'product_id' => $product->id,
                     'image_path' => $path,
                     'is_primary' => !$hasPrimary && $index === 0,
-                    'order' => $maxOrder + 1 + $index, // Tambah di urutan terakhir
+                    'order' => $maxOrder + 1 + $index,
                 ]);
             }
         }
@@ -172,6 +212,15 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        // Cek apakah produk digunakan di rental aktif
+        $activeRentals = Rental::where('product_id', $product->id)
+            ->whereIn('status', ['pending', 'ongoing'])
+            ->exists();
+
+        if ($activeRentals) {
+            return redirect()->back()->with('error', 'Produk tidak dapat dihapus karena masih digunakan di rental aktif.');
+        }
+
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->image_path);
             $image->delete();
@@ -199,11 +248,13 @@ class ProductController extends Controller
         $request->validate([
             'image_ids' => 'required|array',
             'image_ids.*' => 'exists:product_images,id',
+        ], [
+            'image_ids.required' => 'Daftar gambar wajib diisi.',
+            'image_ids.*.exists' => 'Gambar yang dipilih tidak valid.',
         ]);
 
         $imageIds = $request->input('image_ids');
 
-        // Pastikan semua image_ids milik produk ini
         $images = ProductImage::where('product_id', $product->id)
             ->whereIn('id', $imageIds)
             ->get();
@@ -215,7 +266,6 @@ class ProductController extends Controller
             ], 400);
         }
 
-        // Update urutan berdasarkan array image_ids
         foreach ($imageIds as $index => $imageId) {
             ProductImage::where('id', $imageId)
                 ->where('product_id', $product->id)

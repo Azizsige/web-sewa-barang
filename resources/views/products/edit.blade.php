@@ -3,15 +3,15 @@
 @section('content')
 <div class="row">
   <div class="col-12">
-    <h1 class="fw-bold fs-3 mb-4">Edit Produk</h1>
-    <div class="card shadow-sm">
+    <h1 class="mb-4 fw-bold fs-3">Edit Produk</h1>
+    <div class="shadow-sm card">
       <div class="card-body">
         <form method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data"
           id="product-form">
           @csrf
           @method('PUT')
           <div class="mb-4">
-            <label for="category_id" class="form-label text-gray-700">Kategori</label>
+            <label for="category_id" class="text-gray-700 form-label">Kategori</label>
             @if($categories && $categories->count() > 0)
             <select name="category_id" id="category_id" class="form-select @error('category_id') is-invalid @enderror">
               <option value="">Pilih Kategori</option>
@@ -21,7 +21,7 @@
               @endforeach
             </select>
             @else
-            <p class="text-red-500 text-sm">Belum ada kategori. <a href="{{ route('categories.create') }}"
+            <p class="text-sm text-red-500">Belum ada kategori. <a href="{{ route('categories.create') }}"
                 class="text-blue-500 hover:underline">Tambah kategori dulu</a>.</p>
             <select name="category_id" id="category_id" class="form-select" disabled>
               <option value="">Pilih Kategori</option>
@@ -30,25 +30,25 @@
             @error('category_id')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="category-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="category-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="name" class="form-label text-gray-700">Nama Produk</label>
+            <label for="name" class="text-gray-700 form-label">Nama Produk</label>
             <input type="text" name="name" id="name" class="form-control @error('name') is-invalid @enderror"
               value="{{ old('name', $product->name) }}">
             @error('name')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="name-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="name-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="slug" class="form-label text-gray-700">Slug (Otomatis)</label>
-            <input type="text" name="slug" id="slug" class="form-control bg-gray-100" readonly
+            <label for="slug" class="text-gray-700 form-label">Slug (Otomatis)</label>
+            <input type="text" name="slug" id="slug" class="bg-gray-100 form-control" readonly
               value="{{ old('slug', $product->slug) }}">
-            <p class="text-sm text-gray-500 mt-1">Slug akan otomatis di-generate dari nama produk.</p>
+            <p class="mt-1 text-sm text-gray-500">Slug akan otomatis di-generate dari nama produk.</p>
           </div>
           <div class="mb-4">
-            <label for="description" class="form-label text-gray-700">Deskripsi</label>
+            <label for="description" class="text-gray-700 form-label">Deskripsi</label>
             <textarea name="description" id="description"
               class="form-control @error('description') is-invalid @enderror">{{ old('description', $product->description) }}</textarea>
             @error('description')
@@ -56,71 +56,71 @@
             @enderror
           </div>
           <div class="mb-4">
-            <label for="price" class="form-label text-gray-700">Harga Sewa (per hari)</label>
+            <label for="price" class="text-gray-700 form-label">Harga Sewa (per hari)</label>
             <input type="number" name="price" id="price" class="form-control @error('price') is-invalid @enderror"
               value="{{ old('price', $product->price) }}">
             @error('price')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="price-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="price-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="stock" class="form-label text-gray-700">Stok</label>
+            <label for="stock" class="text-gray-700 form-label">Stok</label>
             <input type="number" name="stock" id="stock" class="form-control @error('stock') is-invalid @enderror"
               value="{{ old('stock', $product->stock) }}">
             @error('stock')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="stock-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="stock-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label class="form-label text-gray-700 font-semibold">Gambar Produk Saat Ini</label>
+            <label class="font-semibold text-gray-700 form-label">Gambar Produk Saat Ini</label>
             @if($product->images->count() > 0)
-            <p class="text-sm text-gray-600 mb-3">Drag gambar untuk mengatur ulang urutan, pilih gambar utama, atau
-              hapus gambar.</p>
-            <div id="image-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <p class="mb-3 text-sm text-gray-600">Drag gambar ke kiri/kanan untuk mengatur ulang urutan, pilih gambar
+              utama, atau hapus gambar.</p>
+            <div id="image-list" class="flex flex-row pb-4 space-x-4 overflow-x-auto">
               @foreach($product->images as $image)
               <div
-                class="image-item relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-move p-3"
+                class="flex-none w-48 p-3 transition-shadow duration-200 bg-white border border-gray-200 rounded-lg shadow-sm cursor-move image-item hover:shadow-md"
                 data-image-id="{{ $image->id }}">
                 <div class="relative">
                   <img src="{{ asset('storage/' . $image->image_path) }}" alt="Product Image"
-                    class="w-full h-48 object-cover rounded-md">
+                    class="object-cover w-full rounded-md h-36">
                   @if($image->is_primary)
                   <span
-                    class="absolute top-2 left-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">Gambar
+                    class="absolute px-2 py-1 text-xs font-semibold text-white bg-green-500 rounded top-2 left-2">Gambar
                     Utama</span>
                   @endif
                 </div>
-                <div class="mt-3 flex items-center justify-between">
+                <div class="flex items-center justify-between mt-3">
                   <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="primary_image_id" value="{{ $image->id }}"
-                      class="primary-image-radio form-radio h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
+                      class="w-5 h-5 text-green-600 border-gray-300 primary-image-radio form-radio focus:ring-green-500"
                       {{ $image->is_primary ? 'checked' : '' }}>
-                    <span class="text-sm text-gray-700 font-medium">Jadikan Utama</span>
+                    <span class="text-sm font-medium text-gray-700">Utama</span>
                   </label>
                   <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" name="delete_images[]" value="{{ $image->id }}"
-                      class="delete-image-checkbox form-checkbox h-5 w-5 text-red-600 border-gray-300 focus:ring-red-500">
-                    <span class="text-sm text-red-600 font-medium">Hapus</span>
+                      class="w-5 h-5 text-red-600 border-gray-300 delete-image-checkbox form-checkbox focus:ring-red-500">
+                    <span class="text-sm font-medium text-red-600">Hapus</span>
                   </label>
                 </div>
               </div>
               @endforeach
             </div>
             @else
-            <p class="text-gray-500 italic">Belum ada gambar untuk produk ini.</p>
+            <p class="italic text-gray-500">Belum ada gambar untuk produk ini.</p>
             @endif
           </div>
           <div class="mb-4">
-            <label for="images" class="form-label text-gray-700 font-semibold">Tambah Gambar Baru (Opsional)</label>
+            <label for="images" class="font-semibold text-gray-700 form-label">Tambah Gambar Baru (Opsional)</label>
             <div
-              class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
+              class="relative p-6 text-center transition-all duration-200 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500">
               <input type="file" name="images[]" id="images" accept="image/*" multiple
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              <div id="image-previews" class="mt-2 flex flex-wrap gap-4"></div>
+              <div id="image-previews" class="flex flex-wrap gap-4 mt-2"></div>
               <div id="default-message">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18">
                   </path>
@@ -129,7 +129,7 @@
                 <p class="mt-1 text-xs text-gray-500">Hanya file gambar (jpg, png, gif), maksimal 2MB per file</p>
               </div>
               <div id="loading-spinner" class="hidden mt-2">
-                <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+                <svg class="w-8 h-8 mx-auto text-blue-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
                   viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
@@ -138,20 +138,20 @@
               </div>
             </div>
             @error('images.*')
-            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+            <div class="mt-1 text-sm text-red-500">{{ $message }}</div>
             @enderror
-            <div id="images-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="images-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label class="form-check-label flex items-center space-x-2">
+            <label class="flex items-center space-x-2 form-check-label">
               <input type="checkbox" name="is_bundle"
-                class="form-check-input h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500" {{ old('is_bundle',
+                class="w-5 h-5 text-blue-600 border-gray-300 form-check-input focus:ring-blue-500" {{ old('is_bundle',
                 $product->is_bundle) ? 'checked' : '' }}>
-              <span class="text-gray-700 font-medium">Apakah ini paket (bundle)?</span>
+              <span class="font-medium text-gray-700">Apakah ini paket (bundle)?</span>
             </label>
           </div>
           <div class="mb-4">
-            <label for="status" class="form-label text-gray-700 font-semibold">Status</label>
+            <label for="status" class="font-semibold text-gray-700 form-label">Status</label>
             <select name="status" id="status" class="form-select @error('status') is-invalid @enderror">
               <option value="active" {{ old('status', $product->status) === 'active' ? 'selected' : '' }}>Aktif</option>
               <option value="inactive" {{ old('status', $product->status) === 'inactive' ? 'selected' : '' }}>Non-Aktif
@@ -160,11 +160,11 @@
             @error('status')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="status-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="status-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="flex space-x-3">
-            <button type="submit" class="btn btn-primary px-4 py-2">Simpan Perubahan</button>
-            <a href="{{ route('products.index') }}" class="btn btn-secondary px-4 py-2">Batal</a>
+            <button type="submit" class="px-4 py-2 btn btn-primary">Simpan Perubahan</button>
+            <a href="{{ route('products.index') }}" class="px-4 py-2 btn btn-secondary">Batal</a>
           </div>
         </form>
       </div>
@@ -194,6 +194,9 @@ const priceError = document.getElementById('price-error');
 const stockError = document.getElementById('stock-error');
 const imagesError = document.getElementById('images-error');
 const statusError = document.getElementById('status-error');
+const loadingSpinner = document.getElementById('loading-spinner');
+const defaultMessage = document.getElementById('default-message');
+const imagePreviews = document.getElementById('image-previews');
 
 if (form && categoryInput && nameInput && slugInput && priceInput && stockInput && imagesInput && statusInput && categoryError && nameError && priceError && stockError && imagesError && statusError) {
     nameInput.addEventListener('input', function() {
@@ -222,11 +225,12 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
         @endif
 
         @if ($errors->any())
+            let errorMessage = `@foreach ($errors->all() as $error)
+                {{ $error }}<br>
+            @endforeach`;
             Swal.fire({
                 title: 'Gagal!',
-                html: `@foreach ($errors->all() as $error)
-                    {{ $error }}<br>
-                @endforeach`,
+                html: errorMessage,
                 icon: 'error',
                 confirmButtonText: 'OK'
             });
@@ -254,6 +258,19 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
                         firstAvailableRadio.checked = true;
                     }
                 }
+
+                // Update validasi minimal 1 gambar secara real-time
+                const deleteImages = document.querySelectorAll('input[name="delete_images[]"]:checked');
+                const remainingImages = {{ $product->images->count() }} - deleteImages.length;
+                const newImages = imagesInput.files ? imagesInput.files.length : 0;
+                if (remainingImages + newImages === 0) {
+                    imagesError.textContent = 'Produk harus memiliki setidaknya satu gambar.';
+                    imagesError.classList.remove('hidden');
+                    imagesInput.parentElement.classList.add('border-red-500');
+                } else {
+                    imagesError.classList.add('hidden');
+                    imagesInput.parentElement.classList.remove('border-red-500');
+                }
             });
         });
 
@@ -262,25 +279,52 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
         if (imageList) {
             let draggedItem = null;
 
+            const imageItems = document.querySelectorAll('.image-item');
+            imageItems.forEach(item => {
+                const imageId = item.dataset.imageId;
+                if (!imageId) {
+                    console.error('Image item missing data-image-id:', item);
+                    item.style.border = '2px solid red';
+                    return;
+                }
+                item.setAttribute('draggable', true);
+            });
+
             imageList.addEventListener('dragstart', function(e) {
-                if (e.target.classList.contains('image-item')) {
-                    draggedItem = e.target;
+                const target = e.target.closest('.image-item');
+                if (target) {
+                    draggedItem = target;
                     setTimeout(() => {
                         draggedItem.classList.add('opacity-60', 'scale-95');
                     }, 0);
+                    console.log('Drag started on:', draggedItem.dataset.imageId);
                 }
             });
 
             imageList.addEventListener('dragend', function() {
                 if (draggedItem) {
                     draggedItem.classList.remove('opacity-60', 'scale-95');
-                    draggedItem = null;
+                    console.log('Drag ended on:', draggedItem.dataset.imageId);
 
-                    // Ambil urutan baru
                     const imageItems = Array.from(imageList.querySelectorAll('.image-item'));
-                    const imageIds = imageItems.map(item => item.dataset.imageId);
+                    const imageIds = imageItems
+                        .map(item => item.dataset.imageId)
+                        .filter(id => id);
 
-                    // Kirim urutan baru ke server
+                    if (imageIds.length === 0) {
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: 'Tidak ada gambar yang valid untuk diurutkan.',
+                            icon: 'error',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1500,
+                        });
+                        draggedItem = null;
+                        return;
+                    }
+
                     fetch('{{ route('products.updateImageOrder', $product) }}', {
                         method: 'POST',
                         headers: {
@@ -290,8 +334,15 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
                         },
                         body: JSON.stringify({ image_ids: imageIds }),
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log('Fetch response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error('Server responded with status: ' + response.status);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Server response:', data);
                         if (data.success) {
                             Swal.fire({
                                 title: 'Berhasil!',
@@ -307,6 +358,7 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
                         }
                     })
                     .catch(error => {
+                        console.error('Error during fetch:', error);
                         Swal.fire({
                             title: 'Gagal!',
                             text: error.message || 'Terjadi kesalahan saat memperbarui urutan.',
@@ -316,8 +368,9 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
                             showConfirmButton: false,
                             timer: 1500,
                         });
-                        console.error('Error:', error);
                     });
+
+                    draggedItem = null;
                 }
             });
 
@@ -354,12 +407,8 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
                     } else {
                         target.before(draggedItem);
                     }
+                    console.log(`Moved from index ${draggedIndex} to ${targetIndex}`);
                 }
-            });
-
-            // Tambah atribut draggable ke semua image-item
-            document.querySelectorAll('.image-item').forEach(item => {
-                item.setAttribute('draggable', true);
             });
         }
     });
@@ -455,6 +504,13 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
                 Swal.showLoading();
             }
         });
+
+        // Tampilkan spinner hanya setelah validasi lolos
+        if (loadingSpinner && defaultMessage && imagePreviews) {
+            loadingSpinner.classList.remove('hidden');
+            defaultMessage.classList.add('hidden');
+            imagePreviews.classList.add('hidden');
+        }
     });
 
     categoryInput.addEventListener('change', function() {
@@ -532,18 +588,18 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
 
             defaultMessage.classList.add('hidden');
         }
-    });
 
-    form.addEventListener('submit', function() {
-        if (!categoryInput.value || !nameInput.value.trim() || !priceInput.value || priceInput.value < 0 || !stockInput.value || stockInput.value < 0) return;
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const defaultMessage = document.getElementById('default-message');
-        const imagePreviews = document.getElementById('image-previews');
-
-        if (loadingSpinner && defaultMessage && imagePreviews) {
-            loadingSpinner.classList.remove('hidden');
-            defaultMessage.classList.add('hidden');
-            imagePreviews.classList.add('hidden');
+        // Update validasi minimal 1 gambar secara real-time
+        const deleteImages = document.querySelectorAll('input[name="delete_images[]"]:checked');
+        const remainingImages = {{ $product->images->count() }} - deleteImages.length;
+        const newImages = imagesInput.files ? imagesInput.files.length : 0;
+        if (remainingImages + newImages === 0) {
+            imagesError.textContent = 'Produk harus memiliki setidaknya satu gambar.';
+            imagesError.classList.remove('hidden');
+            imagesInput.parentElement.classList.add('border-red-500');
+        } else {
+            imagesError.classList.add('hidden');
+            imagesInput.parentElement.classList.remove('border-red-500');
         }
     });
 }

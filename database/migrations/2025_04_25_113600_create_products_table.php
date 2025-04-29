@@ -16,7 +16,7 @@ class CreateProductsTable extends Migration
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->integer('price');
-            $table->integer('stock');
+            $table->integer('stock')->unsigned(); // Tambah unsigned supaya stok nggak negatif
             $table->boolean('is_bundle')->default(false);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
@@ -30,7 +30,7 @@ class CreateProductsTable extends Migration
             $table->uuid('product_id');
             $table->string('image_path');
             $table->boolean('is_primary')->default(false);
-            $table->integer('order')->default(0); // Tambah kolom order
+            $table->integer('order')->default(0);
             $table->timestamps();
 
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
@@ -39,6 +39,10 @@ class CreateProductsTable extends Migration
 
     public function down()
     {
+        // Hapus foreign key di product_images sebelum drop tabel
+        Schema::table('product_images', function (Blueprint $table) {
+            $table->dropForeign(['product_id']);
+        });
         Schema::dropIfExists('product_images');
         Schema::dropIfExists('products');
     }

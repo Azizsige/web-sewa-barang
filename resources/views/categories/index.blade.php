@@ -5,16 +5,18 @@
   <div class="row">
     <div class="col-12">
       <h1 class="fw-bold fs-3">Daftar Kategori Produk</h1>
-      <a href="{{ route('categories.create') }}" class="btn btn-primary mb-3">Tambah Kategori</a>
+      <a href="{{ route('categories.create') }}" class="mb-3 btn btn-primary">Tambah Kategori</a>
       <div class="card">
         <div class="card-body">
           <div class="table-responsive">
-            <table class="table text-nowrap mb-0 align-middle">
+            <table class="table mb-0 align-middle text-nowrap">
               <thead>
                 <tr>
                   <th>Gambar</th>
                   <th>Nama Kategori</th>
                   <th>Slug</th>
+                  <th>Deskripsi</th>
+                  <th>Jumlah Produk</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -24,17 +26,19 @@
                   <td>
                     @if($category->image)
                     <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}"
-                      class="h-12 w-12 object-cover rounded">
+                      class="object-cover w-12 h-12 rounded">
                     @else
                     <span>-</span>
                     @endif
                   </td>
                   <td>{{ $category->name }}</td>
                   <td>{{ $category->slug }}</td>
+                  <td>{{ $category->description ?? '-' }}</td>
+                  <td>{{ $category->products_count }} produk</td>
                   <td>
                     <a href="{{ route('categories.edit', $category) }}" class="btn btn-sm btn-warning">Edit</a>
                     <form action="{{ route('categories.destroy', $category->id) }}" method="POST"
-                      class="delete-form inline" data-category-name="{{ $category->name }}">
+                      class="inline delete-form" data-category-name="{{ $category->name }}">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
@@ -43,7 +47,7 @@
                 </tr>
                 @empty
                 <tr>
-                  <td colspan="4" class="text-center">Belum ada kategori.</td>
+                  <td colspan="6" class="text-center">Belum ada kategori.</td>
                 </tr>
                 @endforelse
               </tbody>

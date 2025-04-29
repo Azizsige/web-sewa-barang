@@ -3,40 +3,40 @@
 @section('content')
 <div class="row">
   <div class="col-12">
-    <h1 class="fw-bold fs-3 mb-4">Tambah Rental</h1>
-    <div class="card shadow-sm">
+    <h1 class="mb-4 fw-bold fs-3">Tambah Rental</h1>
+    <div class="shadow-sm card">
       <div class="card-body">
         <form method="POST" action="{{ route('rentals.store') }}" id="rental-form">
           @csrf
           <div class="mb-4">
-            <label for="customer_name" class="form-label text-gray-700">Nama Penyewa</label>
+            <label for="customer_name" class="text-gray-700 form-label">Nama Penyewa</label>
             <input type="text" name="customer_name" id="customer_name"
               class="form-control @error('customer_name') is-invalid @enderror" value="{{ old('customer_name') }}">
             @error('customer_name')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="customer_name-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="customer_name-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="customer_email" class="form-label text-gray-700">Email Penyewa (Opsional)</label>
+            <label for="customer_email" class="text-gray-700 form-label">Email Penyewa (Opsional)</label>
             <input type="email" name="customer_email" id="customer_email"
               class="form-control @error('customer_email') is-invalid @enderror" value="{{ old('customer_email') }}">
             @error('customer_email')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="customer_email-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="customer_email-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="customer_phone" class="form-label text-gray-700">Nomor Telepon Penyewa (Opsional)</label>
+            <label for="customer_phone" class="text-gray-700 form-label">Nomor Telepon Penyewa (Opsional)</label>
             <input type="text" name="customer_phone" id="customer_phone"
               class="form-control @error('customer_phone') is-invalid @enderror" value="{{ old('customer_phone') }}">
             @error('customer_phone')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="customer_phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="customer_phone-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="product_id" class="form-label text-gray-700">Produk</label>
+            <label for="product_id" class="text-gray-700 form-label">Produk</label>
             @if($products && $products->count() > 0)
             <select name="product_id" id="product_id" class="form-select @error('product_id') is-invalid @enderror">
               <option value="">Pilih Produk</option>
@@ -47,7 +47,7 @@
               @endforeach
             </select>
             @else
-            <p class="text-red-500 text-sm">Belum ada produk dengan stok tersedia. <a
+            <p class="text-sm text-red-500">Belum ada produk dengan stok tersedia. <a
                 href="{{ route('products.create') }}" class="text-blue-500 hover:underline">Tambah produk dulu</a>.</p>
             <select name="product_id" id="product_id" class="form-select" disabled>
               <option value="">Pilih Produk</option>
@@ -56,30 +56,31 @@
             @error('product_id')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="product_id-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="product_id-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="start_date" class="form-label text-gray-700">Tanggal Mulai Sewa</label>
+            <label for="start_date" class="text-gray-700 form-label">Tanggal Mulai Sewa</label>
             <input type="text" name="start_date" id="start_date"
               class="form-control flatpickr @error('start_date') is-invalid @enderror" value="{{ old('start_date') }}"
               readonly>
             @error('start_date')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="start_date-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="start_date-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="mb-4">
-            <label for="duration" class="form-label text-gray-700">Durasi Sewa (Hari)</label>
-            <input type="number" name="duration" id="duration"
-              class="form-control @error('duration') is-invalid @enderror" value="{{ old('duration') }}" min="1">
-            @error('duration')
+            <label for="end_date" class="text-gray-700 form-label">Tanggal Selesai Sewa</label>
+            <input type="text" name="end_date" id="end_date"
+              class="form-control flatpickr @error('end_date') is-invalid @enderror" value="{{ old('end_date') }}"
+              readonly>
+            @error('end_date')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <div id="duration-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <div id="end_date-error" class="hidden mt-1 text-sm text-red-500"></div>
           </div>
           <div class="flex space-x-3">
-            <button type="submit" class="btn btn-primary px-4 py-2">Simpan</button>
-            <a href="{{ route('rentals.index') }}" class="btn btn-secondary px-4 py-2">Batal</a>
+            <button type="submit" class="px-4 py-2 btn btn-primary">Simpan</button>
+            <a href="{{ route('rentals.index') }}" class="px-4 py-2 btn btn-secondary">Batal</a>
           </div>
         </form>
       </div>
@@ -90,15 +91,32 @@
 
 @section('scripts')
 <script>
-  // Inisialisasi Flatpickr untuk start_date
+  // Inisialisasi Flatpickr untuk start_date dan end_date
 document.addEventListener('DOMContentLoaded', function() {
-    flatpickr("#start_date", {
+    const startDatePicker = flatpickr("#start_date", {
         dateFormat: "Y-m-d",
         minDate: "today",
         defaultDate: "{{ old('start_date') ?: date('Y-m-d') }}",
         onChange: function(selectedDates, dateStr, instance) {
             startDateError.classList.add('hidden');
             startDateInput.classList.remove('border-red-500');
+            // Update minDate untuk end_date
+            if (selectedDates.length > 0) {
+                const startDate = selectedDates[0];
+                const minEndDate = new Date(startDate);
+                minEndDate.setDate(minEndDate.getDate() + 1); // Minimal 1 hari setelah start_date
+                endDatePicker.set('minDate', minEndDate);
+            }
+        }
+    });
+
+    const endDatePicker = flatpickr("#end_date", {
+        dateFormat: "Y-m-d",
+        minDate: "tomorrow", // Default minimal besok, bakal diupdate setelah start_date dipilih
+        defaultDate: "{{ old('end_date') ?: null }}",
+        onChange: function(selectedDates, dateStr, instance) {
+            endDateError.classList.add('hidden');
+            endDateInput.classList.remove('border-red-500');
         }
     });
 });
@@ -110,15 +128,15 @@ const customerEmailInput = document.getElementById('customer_email');
 const customerPhoneInput = document.getElementById('customer_phone');
 const productIdInput = document.getElementById('product_id');
 const startDateInput = document.getElementById('start_date');
-const durationInput = document.getElementById('duration');
+const endDateInput = document.getElementById('end_date');
 const customerNameError = document.getElementById('customer_name-error');
 const customerEmailError = document.getElementById('customer_email-error');
 const customerPhoneError = document.getElementById('customer_phone-error');
 const productIdError = document.getElementById('product_id-error');
 const startDateError = document.getElementById('start_date-error');
-const durationError = document.getElementById('duration-error');
+const endDateError = document.getElementById('end_date-error');
 
-if (form && customerNameInput && customerEmailInput && customerPhoneInput && productIdInput && startDateInput && durationInput && customerNameError && customerEmailError && customerPhoneError && productIdError && startDateError && durationError) {
+if (form && customerNameInput && customerEmailInput && customerPhoneInput && productIdInput && startDateInput && endDateInput && customerNameError && customerEmailError && customerPhoneError && productIdError && startDateError && endDateError) {
     // Generate pesan error pas halaman dibuka dan cek pesan error
     document.addEventListener('DOMContentLoaded', function() {
         // Cek apakah ada flash message error (validasi gagal), kalau ada tampilkan SweetAlert
@@ -153,13 +171,13 @@ if (form && customerNameInput && customerEmailInput && customerPhoneInput && pro
         customerPhoneError.classList.add('hidden');
         productIdError.classList.add('hidden');
         startDateError.classList.add('hidden');
-        durationError.classList.add('hidden');
+        endDateError.classList.add('hidden');
         customerNameInput.classList.remove('border-red-500');
         customerEmailInput.classList.remove('border-red-500');
         customerPhoneInput.classList.remove('border-red-500');
         productIdInput.classList.remove('border-red-500');
         startDateInput.classList.remove('border-red-500');
-        durationInput.classList.remove('border-red-500');
+        endDateInput.classList.remove('border-red-500');
 
         // Cek customer_name
         if (!customerNameInput.value.trim()) {
@@ -223,14 +241,26 @@ if (form && customerNameInput && customerEmailInput && customerPhoneInput && pro
             }
         }
 
-        // Cek duration
-        if (!durationInput.value || durationInput.value < 1) {
-            durationError.textContent = 'Durasi wajib diisi dan minimal 1 hari.';
-            durationError.classList.remove('hidden');
-            durationInput.classList.add('border-red-500');
+        // Cek end_date
+        if (!endDateInput.value) {
+            endDateError.textContent = 'Tanggal selesai wajib diisi.';
+            endDateError.classList.remove('hidden');
+            endDateInput.classList.add('border-red-500');
             if (!hasError) {
-                durationInput.focus();
+                endDateInput.focus();
                 hasError = true;
+            }
+        } else if (startDateInput.value && endDateInput.value) {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            if (endDate <= startDate) {
+                endDateError.textContent = 'Tanggal selesai harus setelah tanggal mulai.';
+                endDateError.classList.remove('hidden');
+                endDateInput.classList.add('border-red-500');
+                if (!hasError) {
+                    endDateInput.focus();
+                    hasError = true;
+                }
             }
         }
 
@@ -269,7 +299,7 @@ if (form && customerNameInput && customerEmailInput && customerPhoneInput && pro
 
     productIdInput.addEventListener('change', function() {
         productIdError.classList.add('hidden');
-        productIdInput.classList.remove('border-red-500');
+        productIdInput.classList.add('border-red-500');
     });
 
     startDateInput.addEventListener('change', function() {
@@ -277,12 +307,12 @@ if (form && customerNameInput && customerEmailInput && customerPhoneInput && pro
         startDateInput.classList.remove('border-red-500');
     });
 
-    durationInput.addEventListener('input', function() {
-        durationError.classList.add('hidden');
-        durationInput.classList.remove('border-red-500');
+    endDateInput.addEventListener('change', function() {
+        endDateError.classList.add('hidden');
+        endDateInput.classList.remove('border-red-500');
     });
 } else {
-    console.error('Elements not found:', { form, customerNameInput, customerEmailInput, customerPhoneInput, productIdInput, startDateInput, durationInput, customerNameError, customerEmailError, customerPhoneError, productIdError, startDateError, durationError });
+    console.error('Elements not found:', { form, customerNameInput, customerEmailInput, customerPhoneInput, productIdInput, startDateInput, endDateInput, customerNameError, customerEmailError, customerPhoneError, productIdError, startDateError, endDateError });
 }
 </script>
 @endsection

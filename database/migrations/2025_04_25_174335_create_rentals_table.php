@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('customer_phone')->nullable();
             $table->uuid('product_id');
             $table->date('start_date');
-            $table->integer('duration');
             $table->date('end_date');
             $table->integer('total_price');
             $table->enum('status', ['pending', 'ongoing', 'completed', 'canceled'])->default('pending');
@@ -29,6 +28,23 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('rentals');
+        Schema::table('rentals', function (Blueprint $table) {
+            $table->dropForeign(['product_id']);
+            $table->dropColumn([
+                'rental_code',
+                'customer_name',
+                'customer_email',
+                'customer_phone',
+                'product_id',
+                'start_date',
+                'end_date',
+                'total_price',
+                'status',
+                'proof_of_payment',
+                'created_at',
+                'updated_at'
+            ]);
+            $table->drop();
+        });
     }
 };

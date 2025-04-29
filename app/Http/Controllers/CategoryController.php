@@ -9,7 +9,7 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::withCount('products')->get();
         return view('categories.index', compact('categories'));
     }
 
@@ -21,7 +21,8 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:categories,name',
+            'description' => 'nullable|string|max:1000',
             'image' => 'required|image|mimes:jpeg,png,gif|max:2048',
         ]);
 
@@ -32,6 +33,7 @@ class CategoryController extends Controller
 
         Category::create([
             'name' => $validated['name'],
+            'description' => $validated['description'],
             'image' => $imagePath,
         ]);
 
@@ -46,12 +48,14 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'description' => 'nullable|string|max:500',
             'image' => 'nullable|image|mimes:jpeg,png,gif|max:2048',
         ]);
 
         $data = [
             'name' => $request->name,
+            'description' => $request->description,
         ];
 
         if ($request->hasFile('image')) {
@@ -68,6 +72,10 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        if ($category->products()->exists()) {
+            return redirect()->route('categories.index')->with('error', 'Kategori tidak bisa dihapus karena masih ada produk terkait.');
+        }
+
         if ($category->image) {
             \Storage::disk('public')->delete($category->image);
         }

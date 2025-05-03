@@ -16,12 +16,19 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $statusFilter = $request->query('status', 'all');
+        $categoryId = $request->query('category_id', 'all');
         $keyword = $request->query('keyword', '');
-        $query = Product::with('category', 'primaryImage');
+        $perPage = $request->query('per_page', 10); // Default 10 kalau nggak dipilih
+        $query = Product::with('category', 'primaryImage')->orderBy('created_at', 'desc');
 
         // Filter berdasarkan status
         if ($statusFilter !== 'all') {
             $query->where('status', $statusFilter);
+        }
+
+        // Filter berdasarkan kategori
+        if ($categoryId !== 'all') {
+            $query->where('category_id', $categoryId);
         }
 
         // Filter berdasarkan keyword (cari di nama produk atau nama kategori)
@@ -34,11 +41,14 @@ class ProductController extends Controller
             });
         }
 
-        // Pagination: 10 produk per halaman
-        $products = $query->paginate(10);
-        $products->appends(['status' => $statusFilter, 'keyword' => $keyword]); // Pastikan query string tetap ada di pagination
+        // Ambil daftar kategori untuk dropdown
+        $categories = Category::all();
 
-        return view('products.index', compact('products', 'statusFilter'));
+        // Pagination: Gunakan nilai per_page dari request
+        $products = $query->paginate($perPage);
+        $products->appends(['status' => $statusFilter, 'category_id' => $categoryId, 'keyword' => $keyword, 'per_page' => $perPage]);
+
+        return view('products.index', compact('products', 'statusFilter', 'categories', 'categoryId', 'perPage'));
     }
 
     public function create()
@@ -52,41 +62,36 @@ class ProductController extends Controller
     {
         Log::info('ProductController@store: Request data', $request->all());
 
-        try {
-            $validated = $request->validate([
-                'category_id' => 'required|exists:categories,id',
-                'name' => 'required|string|max:255|unique:products,name',
-                'slug' => 'required|string|max:255|unique:products,slug',
-                'description' => 'nullable|string',
-                'price' => 'required|numeric|min:0',
-                'stock' => 'required|integer|min:0',
-                'images.*' => 'required|image|mimes:jpeg,png,gif|max:2048',
-                'is_bundle' => 'nullable|boolean',
-                'status' => 'required|in:active,inactive',
-            ], [
-                'category_id.required' => 'Kategori wajib dipilih.',
-                'category_id.exists' => 'Kategori yang dipilih tidak valid.',
-                'name.required' => 'Nama produk wajib diisi.',
-                'name.unique' => 'Nama produk sudah digunakan. Silakan gunakan nama lain.',
-                'slug.required' => 'Slug wajib diisi.',
-                'slug.unique' => 'Slug sudah digunakan. Silakan gunakan slug lain.',
-                'price.required' => 'Harga wajib diisi.',
-                'price.numeric' => 'Harga harus berupa angka.',
-                'price.min' => 'Harga tidak boleh negatif.',
-                'stock.required' => 'Stok wajib diisi.',
-                'stock.integer' => 'Stok harus berupa angka bulat.',
-                'stock.min' => 'Stok tidak boleh negatif.',
-                'images.*.required' => 'Setidaknya satu gambar wajib diunggah.',
-                'images.*.image' => 'File harus berupa gambar.',
-                'images.*.mimes' => 'Hanya file gambar (jpg, png, gif) yang diperbolehkan.',
-                'images.*.max' => 'Ukuran gambar maksimal 2MB per file.',
-                'status.required' => 'Status wajib dipilih.',
-                'status.in' => 'Status tidak valid.',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('ProductController@store: Validation failed', ['errors' => $e->errors()]);
-            return redirect()->back()->with('error', 'Gagal menyimpan produk. Silakan periksa data yang Anda masukkan.')->withInput();
-        }
+        $validated = $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255|unique:products,name',
+            'slug' => 'required|string|max:255|unique:products,slug',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'images.*' => 'required|image|mimes:jpeg,png,gif|max:2048',
+            'is_bundle' => 'nullable|boolean',
+            'status' => 'required|in:active,inactive',
+        ], [
+            'category_id.required' => 'Kategori wajib dipilih.',
+            'category_id.exists' => 'Kategori yang dipilih tidak valid.',
+            'name.required' => 'Nama produk wajib diisi.',
+            'name.unique' => 'Nama produk sudah digunakan. Silakan gunakan nama lain.',
+            'slug.required' => 'Slug wajib diisi.',
+            'slug.unique' => 'Slug sudah digunakan. Silakan gunakan slug lain.',
+            'price.required' => 'Harga wajib diisi.',
+            'price.numeric' => 'Harga harus berupa angka.',
+            'price.min' => 'Harga tidak boleh negatif.',
+            'stock.required' => 'Stok wajib diisi.',
+            'stock.integer' => 'Stok harus berupa angka bulat.',
+            'stock.min' => 'Stok tidak boleh negatif.',
+            'images.*.required' => 'Setidaknya satu gambar wajib diunggah.',
+            'images.*.image' => 'File harus berupa gambar.',
+            'images.*.mimes' => 'Hanya file gambar (jpg, png, gif) yang diperbolehkan.',
+            'images.*.max' => 'Ukuran gambar maksimal 2MB per file.',
+            'status.required' => 'Status wajib dipilih.',
+            'status.in' => 'Status tidak valid.',
+        ]);
 
         Log::info('ProductController@store: Validated data', $validated);
 
@@ -237,11 +242,11 @@ class ProductController extends Controller
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Produk tidak dapat dihapus karena masih digunakan di rental aktif.',
+                    'message' => 'Produk ini sedang disewakan dan tidak dapat dihapus. Selesaikan atau batalkan sewa terlebih dahulu.',
                 ], 400);
             }
             // Jika non-AJAX, redirect dengan flash message
-            return redirect()->back()->with('error', 'Produk tidak dapat dihapus karena masih digunakan di rental aktif.');
+            return redirect()->back()->with('error', 'Produk ini sedang disewakan dan tidak dapat dihapus. Selesaikan atau batalkan sewa terlebih dahulu.');
         }
 
         // Hapus gambar terkait

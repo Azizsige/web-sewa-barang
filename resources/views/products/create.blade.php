@@ -167,15 +167,6 @@ if (form && categoryInput && nameInput && slugInput && priceInput && stockInput 
             slugInput.value = generateSlug(nameInput.value);
         }
 
-        @if (session('error'))
-            Swal.fire({
-                title: 'Gagal!',
-                text: '{{ session('error') }}',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        @endif
-
         @if ($errors->any())
             let errorMessages = [];
             @foreach ($errors->all() as $error)

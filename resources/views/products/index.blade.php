@@ -7,15 +7,28 @@
         <div class="flex justify-between mb-4">
             <a href="{{ route('products.create') }}" class="px-4 py-2 btn btn-primary">Tambah Produk</a>
             <div>
-                <form method="GET" action="{{ route('products.index') }}" class="flex space-x-2">
+                <form method="GET" action="{{ route('products.index') }}" class="flex space-x-2" id="filter-form">
                     <input type="text" name="keyword" class="form-control" placeholder="Cari produk..."
-                        value="{{ request()->query('keyword', '') }}">
-                    <select name="status" id="status-filter" class="form-select">
+                        value="{{ request()->query('keyword', '') }}" oninput="debounceSubmit()">
+                    <select name="status" id="status-filter" class="form-select" onchange="this.form.submit()">
                         <option value="all" {{ $statusFilter==='all' ? 'selected' : '' }}>Semua Status</option>
                         <option value="active" {{ $statusFilter==='active' ? 'selected' : '' }}>Aktif</option>
                         <option value="inactive" {{ $statusFilter==='inactive' ? 'selected' : '' }}>Non-Aktif</option>
                     </select>
-                    <button type="submit" class="px-4 py-2 btn btn-primary">Filter</button>
+                    <select name="category_id" id="category-filter" class="form-select" onchange="this.form.submit()">
+                        <option value="all" {{ $categoryId==='all' ? 'selected' : '' }}>Semua Kategori</option>
+                        @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ $categoryId===$category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                    <select name="per_page" id="per-page-filter" class="form-select" onchange="this.form.submit()">
+                        <option value="5" {{ $perPage==5 ? 'selected' : '' }}>Tampilkan 5</option>
+                        <option value="10" {{ $perPage==10 ? 'selected' : '' }}>Tampilkan 10</option>
+                        <option value="15" {{ $perPage==15 ? 'selected' : '' }}>Tampilkan 15</option>
+                        <option value="25" {{ $perPage==25 ? 'selected' : '' }}>Tampilkan 25</option>
+                    </select>
                 </form>
             </div>
         </div>
@@ -81,20 +94,41 @@
                 </table>
                 <!-- Tambah keterangan total data dan showing data -->
                 <div class="mt-4">
-                    <p class="text-muted">
+                    {{-- <p class="text-muted">
                         Total: {{ $products->total() }} produk
                     </p>
                     <p class="text-muted">
                         Showing {{ $products->firstItem() }} to {{ $products->lastItem() }} of {{ $products->total() }}
-                    </p>
+                    </p> --}}
                     {{ $products->links() }}
                 </div>
             </div>
         </div>
         @else
-        <div class="alert alert-info">
-            Belum ada produk. <a href="{{ route('products.create') }}" class="text-blue-500 hover:underline">Tambah
-                produk sekarang</a>.
+        <div class="shadow-sm card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle text-nowrap" id="product-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Produk</th>
+                                <th>Kategori</th>
+                                <th>Harga Sewa (per hari)</th>
+                                <th>Stok</th>
+                                <th>Gambar Utama</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8" class="text-center">Belum ada produk.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
         @endif
     </div>
@@ -103,6 +137,24 @@
 
 @section('scripts')
 <script>
+    // Fungsi debounce untuk input keyword
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Submit form dengan debounce untuk input keyword
+    const debounceSubmit = debounce(() => {
+        document.getElementById('filter-form').submit();
+    }, 500);
+
     document.addEventListener('DOMContentLoaded', function () {
         // Handle hapus produk via AJAX
         const deleteForms = document.querySelectorAll('.delete-form');
@@ -130,7 +182,7 @@
                         Swal.fire({
                             title: 'Menghapus...',
                             text: 'Harap tunggu, sedang menghapus produk.',
-                            allowOutsideClick: false, // Prevent user dari pindah halaman
+                            allowOutsideClick: false,
                             allowEscapeKey: false,
                             didOpen: () => {
                                 Swal.showLoading();
@@ -142,7 +194,7 @@
                             headers: {
                                 'X-CSRF-TOKEN': token,
                                 'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest' // Pastikan header ini ada untuk deteksi AJAX
+                                'X-Requested-With': 'XMLHttpRequest'
                             }
                         })
                         .then(response => response.json())
@@ -195,8 +247,8 @@
         const toggleButtons = document.querySelectorAll('.toggle-status');
         toggleButtons.forEach(button => {
             button.addEventListener('click', function () {
-                const productId = this.getAttribute('data-product-id');
                 const productName = this.getAttribute('data-product-name');
+                const productId = this.getAttribute('data-product-id');
                 const currentStatus = this.getAttribute('data-current-status');
                 const newStatus = currentStatus === 'active' ? 'Non-Aktif' : 'Aktif';
 

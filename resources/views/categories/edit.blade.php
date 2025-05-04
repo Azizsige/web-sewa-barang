@@ -42,8 +42,17 @@
               <input type="file" name="image" id="image" accept="image/*"
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               <div id="image-preview" class="mt-2 {{ $category->image ? '' : 'hidden' }}">
-                <img id="preview-img" src="{{ $category->image ? asset('storage/' . $category->image) : '#' }}"
-                  alt="Preview" class="h-auto max-w-full rounded-lg" />
+                <div class="relative inline-block">
+                  <img id="preview-img" src="{{ $category->image ? asset('storage/' . $category->image) : '#' }}"
+                    alt="Preview" class="h-auto max-w-full rounded-lg" style="max-width: 150px; max-height: 150px;" />
+                  <button type="button" id="remove-image"
+                    class="absolute -top-2 -right-2 text-red-500 hover:text-red-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div id="default-message" class="{{ $category->image ? 'hidden' : '' }}">
                 <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -82,218 +91,237 @@
 @section('scripts')
 <script>
   // Fungsi untuk generate slug dari nama
-function generateSlug(name) {
+  function generateSlug(name) {
     if (!name) return '';
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').trim();
-}
+  }
 
-// Validasi form sebelum submit
-const form = document.getElementById('category-form');
-const nameInput = document.getElementById('name');
-const descriptionInput = document.getElementById('description');
-const slugInput = document.getElementById('slug');
-const imageInput = document.getElementById('image');
-const nameError = document.getElementById('name-error');
-const descriptionError = document.getElementById('description-error');
-const imageError = document.getElementById('image-error');
+  // Validasi form sebelum submit
+  const form = document.getElementById('category-form');
+  const nameInput = document.getElementById('name');
+  const descriptionInput = document.getElementById('description');
+  const slugInput = document.getElementById('slug');
+  const imageInput = document.getElementById('image');
+  const nameError = document.getElementById('name-error');
+  const descriptionError = document.getElementById('description-error');
+  const imageError = document.getElementById('image-error');
 
-if (form && nameInput && descriptionInput && slugInput && imageInput && nameError && descriptionError && imageError) {
+  if (form && nameInput && descriptionInput && slugInput && imageInput && nameError && descriptionError && imageError) {
     // Update slug secara real-time saat user ketik
     nameInput.addEventListener('input', function() {
-        console.log('Input event triggered, name:', this.value);
-        const slug = generateSlug(this.value);
-        console.log('Generated slug:', slug);
-        slugInput.value = slug;
+      console.log('Input event triggered, name:', this.value);
+      const slug = generateSlug(this.value);
+      console.log('Generated slug:', slug);
+      slugInput.value = slug;
 
-        // Hapus pesan error pas user mulai ketik
-        nameError.classList.add('hidden');
-        nameInput.classList.remove('border-red-500');
+      // Hapus pesan error pas user mulai ketik
+      nameError.classList.add('hidden');
+      nameInput.classList.remove('border-red-500');
     });
 
     // Generate slug pas halaman dibuka dan cek pesan error
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOMContentLoaded, name value:', nameInput.value);
-        if (nameInput.value) {
-            slugInput.value = generateSlug(nameInput.value);
-        }
+      console.log('DOMContentLoaded, name value:', nameInput.value);
+      if (nameInput.value) {
+        slugInput.value = generateSlug(nameInput.value);
+      }
 
-        // Cek apakah ada flash message error (validasi gagal), kalau ada tampilkan SweetAlert
-        @if (session('error'))
-            Swal.fire({
-                title: 'Gagal!',
-                text: '{{ session('error') }}',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        @endif
+      // Cek apakah ada flash message error (validasi gagal), kalau ada tampilkan SweetAlert
+      @if (session('error'))
+        Swal.fire({
+          title: 'Gagal!',
+          text: '{{ session('error') }}',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      @endif
 
-        @if ($errors->any())
-            Swal.fire({
-                title: 'Gagal!',
-                html: `@foreach ($errors->all() as $error)
-                    {{ $error }}<br>
-                @endforeach`,
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        @endif
+      @if ($errors->any())
+        Swal.fire({
+          title: 'Gagal!',
+          html: `@foreach ($errors->all() as $error)
+            {{ $error }}<br>
+          @endforeach`,
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      @endif
     });
 
     // Validasi pas submit dan tampilkan loading
     form.addEventListener('submit', function(event) {
-        let hasError = false;
+      let hasError = false;
 
-        // Reset error state
-        nameError.classList.add('hidden');
-        descriptionError.classList.add('hidden');
-        imageError.classList.add('hidden');
-        nameInput.classList.remove('border-red-500');
-        descriptionInput.classList.remove('border-red-500');
-        imageInput.parentElement.classList.remove('border-red-500');
+      // Reset error state
+      nameError.classList.add('hidden');
+      descriptionError.classList.add('hidden');
+      imageError.classList.add('hidden');
+      nameInput.classList.remove('border-red-500');
+      descriptionInput.classList.remove('border-red-500');
+      imageInput.parentElement.classList.remove('border-red-500');
 
-        // Cek nama kategori
-        if (!nameInput.value.trim()) {
-            nameError.textContent = 'Nama kategori wajib diisi.';
-            nameError.classList.remove('hidden');
-            nameInput.classList.add('border-red-500');
-            nameInput.focus();
+      // Cek nama kategori
+      if (!nameInput.value.trim()) {
+        nameError.textContent = 'Nama kategori wajib diisi.';
+        nameError.classList.remove('hidden');
+        nameInput.classList.add('border-red-500');
+        nameInput.focus();
+        hasError = true;
+      }
+
+      // Cek deskripsi (opsional, tapi kalau diisi, maksimal 500 karakter)
+      if (descriptionInput.value && descriptionInput.value.length > 500) {
+        descriptionError.textContent = 'Deskripsi maksimal 500 karakter.';
+        descriptionError.classList.remove('hidden');
+        descriptionInput.classList.add('border-red-500');
+        if (!hasError) {
+          descriptionInput.focus();
+          hasError = true;
+        }
+      }
+
+      // Cek gambar (hanya kalau user pilih file baru)
+      if (imageInput.files && imageInput.files.length > 0) {
+        const file = imageInput.files[0];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        const maxSize = 2 * 1024 * 1024; // 2MB dalam bytes
+
+        if (!allowedTypes.includes(file.type)) {
+          imageError.textContent = 'Hanya file gambar (jpg, png, gif) yang diperbolehkan!';
+          imageError.classList.remove('hidden');
+          imageInput.parentElement.classList.add('border-red-500');
+          if (!hasError) {
+            imageInput.focus();
             hasError = true;
+          }
+        } else if (file.size > maxSize) {
+          imageError.textContent = 'Ukuran gambar maksimal 2MB!';
+          imageError.classList.remove('hidden');
+          imageInput.parentElement.classList.add('border-red-500');
+          if (!hasError) {
+            imageInput.focus();
+            hasError = true;
+          }
         }
+      }
 
-        // Cek deskripsi (opsional, tapi kalau diisi, maksimal 500 karakter)
-        if (descriptionInput.value && descriptionInput.value.length > 500) {
-            descriptionError.textContent = 'Deskripsi maksimal 500 karakter.';
-            descriptionError.classList.remove('hidden');
-            descriptionInput.classList.add('border-red-500');
-            if (!hasError) {
-                descriptionInput.focus();
-                hasError = true;
-            }
+      if (hasError) {
+        event.preventDefault();
+        console.log('Form validation failed');
+        return;
+      }
+
+      // Tampilkan SweetAlert loading dan loading spinner di input gambar
+      Swal.fire({
+        title: 'Menyimpan...',
+        text: 'Harap tunggu, sedang menyimpan kategori.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
         }
+      });
 
-        // Cek gambar (hanya kalau user pilih file baru)
-        if (imageInput.files && imageInput.files.length > 0) {
-            const file = imageInput.files[0];
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            const maxSize = 2 * 1024 * 1024; // 2MB dalam bytes
+      // Tampilkan loading spinner di input gambar
+      const loadingSpinner = document.getElementById('loading-spinner');
+      const defaultMessage = document.getElementById('default-message');
+      const imagePreview = document.getElementById('image-preview');
 
-            if (!allowedTypes.includes(file.type)) {
-                imageError.textContent = 'Hanya file gambar (jpg, png, gif) yang diperbolehkan!';
-                imageError.classList.remove('hidden');
-                imageInput.parentElement.classList.add('border-red-500');
-                if (!hasError) {
-                    imageInput.focus();
-                    hasError = true;
-                }
-            } else if (file.size > maxSize) {
-                imageError.textContent = 'Ukuran gambar maksimal 2MB!';
-                imageError.classList.remove('hidden');
-                imageInput.parentElement.classList.add('border-red-500');
-                if (!hasError) {
-                    imageInput.focus();
-                    hasError = true;
-                }
-            }
-        }
-
-        if (hasError) {
-            event.preventDefault();
-            console.log('Form validation failed');
-            return;
-        }
-
-        // Tampilkan SweetAlert loading dan loading spinner di input gambar
-        Swal.fire({
-            title: 'Menyimpan...',
-            text: 'Harap tunggu, sedang menyimpan kategori.',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // Tampilkan loading spinner di input gambar
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const defaultMessage = document.getElementById('default-message');
-        const imagePreview = document.getElementById('image-preview');
-
-        if (loadingSpinner && defaultMessage && imagePreview) {
-            loadingSpinner.classList.remove('hidden');
-            defaultMessage.classList.add('hidden');
-            imagePreview.classList.add('hidden');
-        } else {
-            console.error('Submit elements not found:', { loadingSpinner, defaultMessage, imagePreview });
-        }
+      if (loadingSpinner && defaultMessage && imagePreview) {
+        loadingSpinner.classList.remove('hidden');
+        defaultMessage.classList.add('hidden');
+        imagePreview.classList.add('hidden');
+      } else {
+        console.error('Submit elements not found:', { loadingSpinner, defaultMessage, imagePreview });
+      }
     });
 
     // Hapus pesan error pas user isi input
     nameInput.addEventListener('input', function() {
-        nameError.classList.add('hidden');
-        nameInput.classList.remove('border-red-500');
+      nameError.classList.add('hidden');
+      nameInput.classList.remove('border-red-500');
     });
 
     descriptionInput.addEventListener('input', function() {
-        descriptionError.classList.add('hidden');
-        descriptionInput.classList.remove('border-red-500');
+      descriptionError.classList.add('hidden');
+      descriptionInput.classList.remove('border-red-500');
     });
 
     // Handle preview gambar dan validasi
     imageInput.addEventListener('change', function(event) {
-        console.log('Image input changed, file:', event.target.files[0]);
-        const file = event.target.files[0];
+      console.log('Image input changed, file:', event.target.files[0]);
+      const file = event.target.files[0];
+      const defaultMessage = document.getElementById('default-message');
+      const imagePreview = document.getElementById('image-preview');
+      const previewImg = document.getElementById('preview-img');
+      const removeButton = document.getElementById('remove-image');
+
+      if (file) {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        const maxSize = 2 * 1024 * 1024; // 2MB dalam bytes
+
+        if (!allowedTypes.includes(file.type)) {
+          Swal.fire({
+            title: 'Gagal!',
+            text: 'Hanya file gambar (jpg, png, gif) yang diperbolehkan!',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+          imageInput.value = '';
+          imageError.classList.remove('hidden');
+          imageInput.parentElement.classList.add('border-red-500');
+          return;
+        }
+
+        if (file.size > maxSize) {
+          Swal.fire({
+            title: 'Gagal!',
+            text: 'Ukuran gambar maksimal 2MB!',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+          imageInput.value = '';
+          imageError.classList.remove('hidden');
+          imageInput.parentElement.classList.add('border-red-500');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          console.log('FileReader onload, result:', e.target.result);
+          previewImg.src = e.target.result;
+          defaultMessage.classList.add('hidden');
+          imagePreview.classList.remove('hidden');
+          removeButton.classList.remove('hidden');
+        };
+        reader.onerror = function(e) {
+          console.error('FileReader error:', e);
+        };
+        reader.readAsDataURL(file);
+
+        // Hapus pesan error
+        imageError.classList.add('hidden');
+        imageInput.parentElement.classList.remove('border-red-500');
+      }
+    });
+
+    // Hapus gambar dari preview
+    const removeButton = document.getElementById('remove-image');
+    if (removeButton) {
+      removeButton.addEventListener('click', function() {
         const defaultMessage = document.getElementById('default-message');
         const imagePreview = document.getElementById('image-preview');
         const previewImg = document.getElementById('preview-img');
-
-        if (file) {
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            const maxSize = 2 * 1024 * 1024; // 2MB dalam bytes
-
-            if (!allowedTypes.includes(file.type)) {
-                Swal.fire({
-                    title: 'Gagal!',
-                    text: 'Hanya file gambar (jpg, png, gif) yang diperbolehkan!',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-                imageInput.value = '';
-                imageError.classList.remove('hidden');
-                imageInput.parentElement.classList.add('border-red-500');
-                return;
-            }
-
-            if (file.size > maxSize) {
-                Swal.fire({
-                    title: 'Gagal!',
-                    text: 'Ukuran gambar maksimal 2MB!',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-                imageInput.value = '';
-                imageError.classList.remove('hidden');
-                imageInput.parentElement.classList.add('border-red-500');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                console.log('FileReader onload, result:', e.target.result);
-                previewImg.src = e.target.result;
-                defaultMessage.classList.add('hidden');
-                imagePreview.classList.remove('hidden');
-            };
-            reader.onerror = function(e) {
-                console.error('FileReader error:', e);
-            };
-            reader.readAsDataURL(file);
-
-            // Hapus pesan error
-            imageError.classList.add('hidden');
-            imageInput.parentElement.classList.remove('border-red-500');
-        }
-    });
-} else {
+        imageInput.value = ''; // Reset input file
+        imagePreview.classList.add('hidden');
+        removeButton.classList.add('hidden');
+        defaultMessage.classList.remove('hidden');
+        previewImg.src = '#'; // Reset src preview
+        imageError.classList.add('hidden');
+        imageInput.parentElement.classList.remove('border-red-500');
+      });
+    }
+  } else {
     console.error('Elements not found:', { form, nameInput, descriptionInput, slugInput, imageInput, nameError, descriptionError, imageError });
-}
+  }
 </script>
 @endsection

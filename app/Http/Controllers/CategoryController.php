@@ -7,10 +7,29 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::withCount('products')->get();
-        return view('categories.index', compact('categories'));
+        $keyword = $request->query('keyword', '');
+        $perPage = $request->query('per_page', 10); // Default 10 kalau nggak dipilih
+
+        $query = Category::withCount('products');
+
+        // Filter berdasarkan keyword (cari di nama atau slug kategori)
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', '%' . $keyword . '%')
+                    ->orWhere('slug', 'like', '%' . $keyword . '%');
+            });
+        }
+
+        // Urutkan berdasarkan created_at terbaru
+        $query->orderBy('created_at', 'desc');
+
+        // Pagination
+        $categories = $query->paginate($perPage);
+        $categories->appends(['keyword' => $keyword, 'per_page' => $perPage]);
+
+        return view('categories.index', compact('categories', 'keyword', 'perPage'));
     }
 
     public function create()
@@ -24,6 +43,15 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255|unique:categories,name',
             'description' => 'nullable|string|max:1000',
             'image' => 'required|image|mimes:jpeg,png,gif|max:2048',
+        ], [
+            'name.required' => 'Nama kategori wajib diisi.',
+            'name.max' => 'Nama kategori maksimal 255 karakter.',
+            'name.unique' => 'Nama kategori sudah digunakan. Silakan gunakan nama lain.',
+            'description.max' => 'Deskripsi maksimal 1000 karakter.',
+            'image.required' => 'Gambar kategori wajib diunggah.',
+            'image.image' => 'File harus berupa gambar.',
+            'image.mimes' => 'Hanya file gambar (jpg, png, gif) yang diperbolehkan.',
+            'image.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         $imagePath = null;
@@ -51,6 +79,14 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
             'description' => 'nullable|string|max:500',
             'image' => 'nullable|image|mimes:jpeg,png,gif|max:2048',
+        ], [
+            'name.required' => 'Nama kategori wajib diisi.',
+            'name.max' => 'Nama kategori maksimal 255 karakter.',
+            'name.unique' => 'Nama kategori sudah digunakan. Silakan gunakan nama lain.',
+            'description.max' => 'Deskripsi maksimal 500 karakter.',
+            'image.image' => 'File harus berupa gambar.',
+            'image.mimes' => 'Hanya file gambar (jpg, png, gif) yang diperbolehkan.',
+            'image.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         $data = [

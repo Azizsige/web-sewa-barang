@@ -4,27 +4,40 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
-      <h1 class="mb-4 fw-bold fs-3">Daftar Kategori Produk</h1>
-      <div class="flex justify-between mb-4">
-        <a href="{{ route('categories.create') }}" class="px-4 py-2 btn btn-primary">Tambah Kategori</a>
-        <div>
-          <form method="GET" action="{{ route('categories.index') }}" class="flex space-x-2" id="filter-form">
-            <input type="text" name="keyword" class="form-control" placeholder="Cari kategori..."
-              value="{{ request()->query('keyword', '') }}" oninput="debounceSubmit()">
-            <select name="per_page" id="per-page-filter" class="form-select" onchange="this.form.submit()">
-              <option value="5" {{ $perPage==5 ? 'selected' : '' }}>Tampilkan 5</option>
-              <option value="10" {{ $perPage==10 ? 'selected' : '' }}>Tampilkan 10</option>
-              <option value="15" {{ $perPage==15 ? 'selected' : '' }}>Tampilkan 15</option>
-              <option value="25" {{ $perPage==25 ? 'selected' : '' }}>Tampilkan 25</option>
-            </select>
+      <div class="flex items-center justify-between mb-3">
+        <h1 class="mb-3 fw-bold fs-6">Daftar Kategori Produk</h1>
+        <div class="flex mb-3 space-x-3">
+          <a href="{{ route('categories.create') }}" class="btn btn-primary">Tambah Kategori</a>
+        </div>
+      </div>
+      <div class="mb-4 shadow-sm card">
+        <div class="card-body">
+          <form method="GET" action="{{ route('categories.index') }}" class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-4"
+            id="filter-form">
+            <div>
+              <label for="keyword" class="block mb-2 text-sm font-medium text-gray-700">Cari</label>
+              <input type="text" name="keyword" id="keyword" class="w-full form-control"
+                value="{{ request('keyword') }}" placeholder="Masukkan nama kategori">
+            </div>
+            <div>
+              <label for="per_page" class="block mb-2 text-sm font-medium text-gray-700">Tampilkan</label>
+              <select name="per_page" id="per_page" class="w-full form-select">
+                <option value="5" {{ $perPage==5 ? 'selected' : '' }}>Tampilkan 5</option>
+                <option value="10" {{ $perPage==10 ? 'selected' : '' }}>Tampilkan 10</option>
+                <option value="15" {{ $perPage==15 ? 'selected' : '' }}>Tampilkan 15</option>
+                <option value="25" {{ $perPage==25 ? 'selected' : '' }}>Tampilkan 25</option>
+              </select>
+            </div>
+            <div class="flex space-x-3 md:col-span-4">
+              <a href="{{ route('categories.index') }}" class="px-4 py-2 btn btn-secondary">Reset Filter</a>
+            </div>
           </form>
         </div>
       </div>
-      @if($categories->count() > 0)
       <div class="shadow-sm card">
-        <div class="card-body">
+        <div class="p-4 card-body">
           <div class="table-responsive">
-            <table class="table mb-0 align-middle text-nowrap">
+            <table class="table mb-0 align-middle text-nowrap" id="category-table">
               <thead>
                 <tr>
                   <th>No</th>
@@ -37,8 +50,8 @@
                 </tr>
               </thead>
               <tbody>
-                @foreach($categories as $index => $category)
-                <tr>
+                @forelse($categories as $index => $category)
+                <tr data-category-id="{{ $category->id }}">
                   <td>{{ $categories->firstItem() + $index }}</td>
                   <td>
                     @if($category->image)
@@ -55,85 +68,65 @@
                   <td>
                     <a href="{{ route('categories.edit', $category) }}" class="btn btn-sm btn-warning">Edit</a>
                     <form action="{{ route('categories.destroy', $category->id) }}" method="POST"
-                      class="inline delete-form" data-category-name="{{ $category->name }}">
+                      class="inline delete-form" data-category-name="{{ $category->name }}"
+                      data-category-id="{{ $category->id }}">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
                     </form>
                   </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr>
+                  <td colspan="7" class="text-center">Belum ada kategori.</td>
+                </tr>
+                @endforelse
               </tbody>
             </table>
           </div>
-          <div class="mt-4">
+          <div class="mt-3">
             {{ $categories->links() }}
           </div>
         </div>
       </div>
-      @else
-      <div class="shadow-sm card">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table mb-0 align-middle text-nowrap">
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Gambar</th>
-                  <th>Nama Kategori</th>
-                  <th>Slug</th>
-                  <th>Deskripsi</th>
-                  <th>Jumlah Produk</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colspan="7" class="text-center">Belum ada kategori.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      @endif
     </div>
   </div>
 </div>
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  // Fungsi debounce untuk input keyword
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-
-  // Submit form dengan debounce untuk input keyword
-  const debounceSubmit = debounce(() => {
-    document.getElementById('filter-form').submit();
-  }, 500);
-
   document.addEventListener('DOMContentLoaded', function () {
-    // Konfirmasi delete dengan SweetAlert
-    const deleteForms = document.querySelectorAll('.delete-form');
+    // Ambil elemen form dan input-nya
+    const filterForm = document.getElementById('filter-form');
+    const perPageSelect = document.getElementById('per_page');
+    const searchInput = document.getElementById('keyword');
 
+    // Event listener untuk select per_page
+    perPageSelect.addEventListener('change', function() {
+      filterForm.submit();
+    });
+
+    // Event listener untuk input search
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchInput.timeout);
+      searchInput.timeout = setTimeout(() => {
+        filterForm.submit();
+      }, 500);
+    });
+
+    // Handle hapus kategori via AJAX
+    const deleteForms = document.querySelectorAll('.delete-form');
     deleteForms.forEach(form => {
       form.addEventListener('submit', function (event) {
-        event.preventDefault(); // Prevent form dari submit langsung
+        event.preventDefault();
 
-        // Ambil nama kategori dari data attribute
         const categoryName = form.getAttribute('data-category-name');
+        const categoryId = form.getAttribute('data-category-id');
+        const url = form.getAttribute('action');
+        const token = document.querySelector('meta[name="csrf-token"]')?.content || form.querySelector('input[name="_token"]').value;
 
-        // Tampilkan SweetAlert konfirmasi
         Swal.fire({
           title: `Hapus Kategori "${categoryName}"?`,
           text: "Kategori yang dihapus tidak dapat dikembalikan!",
@@ -145,7 +138,6 @@
           cancelButtonText: 'Batal'
         }).then((result) => {
           if (result.isConfirmed) {
-            // Tampilkan SweetAlert loading
             Swal.fire({
               title: 'Menghapus...',
               text: 'Harap tunggu, sedang menghapus kategori.',
@@ -155,31 +147,85 @@
               }
             });
 
-            // Submit form setelah loading muncul
-            form.submit();
+            fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+              }
+            })
+            .then(response => {
+              if (!response.ok) {
+                return response.json().then(errorData => {
+                  throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                });
+              }
+              return response.json();
+            })
+            .then(data => {
+              Swal.close();
+
+              if (data.success) {
+                const row = document.querySelector(`tr[data-category-id="${categoryId}"]`);
+                if (row) row.remove();
+
+                const tbody = document.querySelector('#category-table tbody');
+                if (tbody.children.length === 0) {
+                  tbody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada kategori.</td></tr>';
+                }
+
+                Swal.fire({
+                  title: 'Berhasil!',
+                  text: data.message || 'Kategori berhasil dihapus.',
+                  icon: 'success',
+                  confirmButtonText: 'OK'
+                });
+              } else {
+                Swal.fire({
+                  title: 'Gagal!',
+                  text: data.message || 'Terjadi kesalahan saat menghapus kategori.',
+                  icon: 'error',
+                  confirmButtonText: 'OK'
+                });
+              }
+            })
+            .catch(error => {
+              Swal.close();
+              console.error('Error:', error);
+
+              let errorMessage = 'Terjadi kesalahan saat menghapus kategori. Silakan coba lagi.';
+              if (error.message) {
+                errorMessage = error.message;
+              }
+
+              Swal.fire({
+                title: 'Gagal!',
+                text: errorMessage,
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+            });
           }
         });
       });
     });
 
-    // Tampilkan SweetAlert untuk pesan sukses
     @if (session('success'))
-      Swal.fire({
-        title: 'Berhasil!',
-        text: '{{ session('success') }}',
-        icon: 'success',
-        confirmButtonText: 'OK'
-      });
+    Swal.fire({
+      title: 'Berhasil!',
+      text: '{{ session('success') }}',
+      icon: 'success',
+      confirmButtonText: 'OK'
+    });
     @endif
 
-    // Tampilkan SweetAlert untuk pesan error
     @if (session('error'))
-      Swal.fire({
-        title: 'Gagal!',
-        text: '{{ session('error') }}',
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
+    Swal.fire({
+      title: 'Gagal!',
+      text: '{{ session('error') }}',
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
     @endif
   });
 </script>

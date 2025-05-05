@@ -14,9 +14,9 @@
                             <h5 class="card-title fw-semibold">Rental Overview</h5>
                         </div>
                         <div>
-                            <form method="GET" action="{{ route('dashboard') }}">
+                            <form method="GET" action="{{ route('dashboard') }}" id="monthForm">
                                 <select name="month" class="form-select" onchange="this.form.submit()">
-                                    @for($i = 0; $i < 12; $i++) <option
+                                    @for($i = 0; $i < 24; $i++) <option
                                         value="{{ now()->subMonths($i)->format('Y-m') }}" {{ $selectedMonth==now()->
                                         subMonths($i)->format('Y-m') ? 'selected' : '' }}>
                                         {{ now()->subMonths($i)->format('M Y') }}
@@ -202,19 +202,21 @@
     <div class="row">
         @forelse(\App\Models\Product::with('primaryImage')->latest()->take(4)->get() as $product)
         <div class="col-sm-6 col-xl-3">
-            <div class="overflow-hidden card rounded-2">
-                <div class="position-relative">
+            <div class="overflow-hidden card rounded-2" style="min-height: 300px; position: relative;">
+                <div class="position-relative" style="height: 200px; overflow: hidden;">
                     <a href="{{ route('products.show', $product->slug) }}">
                         <img src="{{ $product->primaryImage ? asset('storage/' . $product->primaryImage->image_path) : '../assets/images/products/placeholder.jpg' }}"
-                            class="card-img-top rounded-0" alt="{{ $product->name }}">
+                            class="object-cover card-img-top rounded-0 w-100 h-100" alt="{{ $product->name }}">
                     </a>
+                    <span class="badge bg-{{ $product->status == 'active' ? 'success' : 'danger' }} position-absolute"
+                        style="top: 10px; right: 10px;">{{ ucfirst($product->status) }}</span>
                 </div>
                 <div class="p-4 pt-3 card-body">
-                    <h6 class="fw-semibold fs-4">{{ $product->name }}</h6>
+                    <h6 class="mb-2 fw-semibold fs-4"
+                        style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $product->name }}
+                    </h6>
                     <div class="d-flex align-items-center justify-content-between">
                         <h6 class="mb-0 fw-semibold fs-4">Rp {{ number_format($product->price, 0, ',', '.') }}</h6>
-                        <span class="badge bg-{{ $product->status == 'active' ? 'success' : 'danger' }}">{{
-                            ucfirst($product->status) }}</span>
                     </div>
                 </div>
             </div>
@@ -299,39 +301,147 @@
 </div>
 @endsection
 
+@section('styles')
+<style>
+    .card-img-top {
+        object-fit: cover;
+    }
+</style>
+@endsection
+
 @section('scripts')
 @if($isAdmin)
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.0/dist/apexcharts.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Grafik Rental Overview
+        // Debug URL dan selected month
+        console.log('Current URL:', window.location.href);
+        console.log('Selected Month:', '{{ $selectedMonth }}');
+
+        // Debug data dan labels
+        const rentalData = @json($data);
+        const rentalLabels = @json($labels);
+
+        console.log('Rental Data:', rentalData);
+        console.log('Rental Labels:', rentalLabels);
+
+        // Pastikan data dan labels adalah array
+        if (!Array.isArray(rentalData) || !Array.isArray(rentalLabels)) {
+            console.error('Error: Data atau labels bukan array!', {
+                data: rentalData,
+                labels: rentalLabels
+            });
+            document.querySelector('#chart').innerHTML = '<p class="text-center text-danger">Gagal memuat grafik: Data tidak valid.</p>';
+            return;
+        }
+
+        // Pastikan panjang data dan labels sama
+        if (rentalData.length !== rentalLabels.length) {
+            console.error('Error: Panjang data dan labels tidak sama!', {
+                dataLength: rentalData.length,
+                labelsLength: rentalLabels.length
+            });
+            document.querySelector('#chart').innerHTML = '<p class="text-center text-danger">Gagal memuat grafik: Panjang data dan label tidak cocok.</p>';
+            return;
+        }
+
+        // Pastikan data berisi angka
+        const isDataValid = rentalData.every(item => typeof item === 'number' && !isNaN(item));
+        if (!isDataValid) {
+            console.error('Error: Data berisi nilai yang bukan angka!', rentalData);
+            document.querySelector('#chart').innerHTML = '<p class="text-center text-danger">Gagal memuat grafik: Data harus berupa angka.</p>';
+            return;
+        }
+
+        // Grafik Rental Overview (Bar Chart)
         var options = {
             series: [{
                 name: 'Rentals',
-                data: @json($data)
+                data: rentalData
             }],
             chart: {
                 height: 350,
-                type: 'area'
+                type: 'bar',
+                zoom: {
+                    enabled: false
+                },
+                toolbar: {
+                    show: false
+                }
             },
             dataLabels: {
-                enabled: false
+                enabled: true,
+                formatter: function (val) {
+                    return val > 0 ? val : '';
+                },
+                style: {
+                    fontSize: '12px',
+                    colors: ['#304758']
+                }
             },
-            stroke: {
-                curve: 'smooth'
+            plotOptions: {
+                bar: {
+                    columnWidth: '50%',
+                    distributed: false,
+                    dataLabels: {
+                        position: 'top'
+                    }
+                }
             },
             xaxis: {
-                categories: @json($labels)
+                categories: rentalLabels,
+                labels: {
+                    rotate: -45,
+                    trim: true,
+                    style: {
+                        fontSize: '12px'
+                    }
+                },
+                title: {
+                    text: 'Date',
+                    style: {
+                        fontSize: '14px'
+                    }
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Number of Rentals',
+                    style: {
+                        fontSize: '14px'
+                    }
+                },
+                labels: {
+                    formatter: function (val) {
+                        return val.toFixed(0);
+                    }
+                }
             },
             tooltip: {
-                x: {
-                    format: 'MMM YYYY'
-                },
+                custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                    const date = w.globals.labels[dataPointIndex];
+                    const rentals = series[seriesIndex][dataPointIndex];
+                    return `
+                        <div class="p-2 apexcharts-tooltip-custom">
+                            <strong>${date}</strong><br>
+                            Rentals: ${rentals}
+                        </div>
+                    `;
+                }
             },
+            colors: ['#1ab394'],
+            grid: {
+                borderColor: '#e7e7e7'
+            }
         };
 
-        var chart = new ApexCharts(document.querySelector("#chart"), options);
-        chart.render();
+        try {
+            var chart = new ApexCharts(document.querySelector("#chart"), options);
+            chart.render();
+        } catch (error) {
+            console.error('Error rendering chart:', error);
+            document.querySelector('#chart').innerHTML = '<p class="text-center text-danger">Gagal memuat grafik: Terjadi kesalahan.</p>';
+        }
 
         // Grafik Product Status Breakdown (Donut Chart)
         var breakupOptions = {
@@ -352,11 +462,23 @@
                         position: 'bottom'
                     }
                 }
-            }]
+            }],
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val + ' Products';
+                    }
+                }
+            }
         };
 
-        var breakupChart = new ApexCharts(document.querySelector("#breakup"), breakupOptions);
-        breakupChart.render();
+        try {
+            var breakupChart = new ApexCharts(document.querySelector("#breakup"), breakupOptions);
+            breakupChart.render();
+        } catch (error) {
+            console.error('Error rendering breakup chart:', error);
+            document.querySelector('#breakup').innerHTML = '<p class="text-center text-danger">Gagal memuat grafik.</p>';
+        }
     });
 </script>
 @endif

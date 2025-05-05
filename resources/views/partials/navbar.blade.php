@@ -36,14 +36,14 @@
                 <i class="ti ti-user fs-6"></i>
                 <p class="mb-0 fs-3">My Profile</p>
               </a>
-              <a href="javascript:void(0)" class="gap-2 d-flex align-items-center dropdown-item">
+              {{-- <a href="javascript:void(0)" class="gap-2 d-flex align-items-center dropdown-item">
                 <i class="ti ti-mail fs-6"></i>
                 <p class="mb-0 fs-3">My Account</p>
-              </a>
-              <a href="javascript:void(0)" class="gap-2 d-flex align-items-center dropdown-item">
+              </a> --}}
+              {{-- <a href="javascript:void(0)" class="gap-2 d-flex align-items-center dropdown-item">
                 <i class="ti ti-list-check fs-6"></i>
                 <p class="mb-0 fs-3">My Task</p>
-              </a>
+              </a> --}}
               <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="mx-3 mt-2 btn btn-outline-primary d-block">Logout</button>

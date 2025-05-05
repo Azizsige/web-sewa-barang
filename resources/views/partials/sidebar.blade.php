@@ -4,7 +4,7 @@
       <a href="{{ route('dashboard') }}" class="text-nowrap logo-img">
         <img src="../assets/images/logos/dark-logo.svg" width="180" alt="" />
       </a>
-      <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
+      <div class="cursor-pointer close-btn d-xl-none d-block sidebartoggler" id="sidebarCollapse">
         <i class="ti ti-x fs-8"></i>
       </div>
     </div>
@@ -121,57 +121,18 @@
         </li>
         <li class="nav-small-cap">
           <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">Pengaturan</span>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link" href="#" aria-expanded="false">
-            <span>
-              <i class="ti ti-settings"></i>
-            </span>
-            <span class="hide-menu">Pengaturan Toko</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link" href="#" aria-expanded="false">
-            <span>
-              <i class="ti ti-brand-whatsapp"></i>
-            </span>
-            <span class="hide-menu">Tanya via WA</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link" href="#" aria-expanded="false">
-            <span>
-              <i class="ti ti-lock"></i>
-            </span>
-            <span class="hide-menu">Ganti Password</span>
-          </a>
-        </li>
-        <li class="nav-small-cap">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">Manajemen Toko</span>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link" href="#" aria-expanded="false">
-            <span>
-              <i class="ti ti-store"></i>
-            </span>
-            <span class="hide-menu">Daftar Toko</span>
-          </a>
-        </li>
-        <li class="nav-small-cap">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
           <span class="hide-menu">Manajemen User</span>
         </li>
         <li class="sidebar-item">
-          <a class="sidebar-link" href="#" aria-expanded="false">
+          <a class="sidebar-link {{ request()->routeIs('admin-users.*') ? '' : 'collapsed' }}"
+            href="{{ route('admin-users.index') }}" aria-expanded="false">
             <span>
               <i class="ti ti-users"></i>
             </span>
             <span class="hide-menu">Manajemen User</span>
           </a>
         </li>
-        <li class="nav-small-cap">
+        {{-- <li class="nav-small-cap">
           <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
           <span class="hide-menu">Moderasi</span>
         </li>
@@ -183,29 +144,18 @@
             </span>
             <span class="hide-menu">Lihat Produk Semua Toko</span>
           </a>
-        </li>
+        </li> --}}
         <li class="nav-small-cap">
           <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
           <span class="hide-menu">Monitoring</span>
         </li>
         <li class="sidebar-item">
-          <a class="sidebar-link" href="#" aria-expanded="false">
+          <a class="sidebar-link {{ Route::is('activity_logs.index') ? 'active' : '' }}"
+            href="{{ route('activity_logs.index') }}" aria-expanded="false">
             <span>
               <i class="ti ti-activity"></i>
             </span>
-            <span class="hide-menu">Monitoring Aktivitas</span>
-          </a>
-        </li>
-        <li class="nav-small-cap">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">Pengaturan</span>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link" href="#" aria-expanded="false">
-            <span>
-              <i class="ti ti-lock"></i>
-            </span>
-            <span class="hide-menu">Reset Password User</span>
+            <span class="hide-menu">Activity Logs</span>
           </a>
         </li>
         @endif

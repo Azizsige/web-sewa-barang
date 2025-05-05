@@ -43,19 +43,16 @@ class Rental extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            // Generate UUID untuk ID
             if (empty($model->id)) {
                 $model->id = (string) Str::uuid();
             }
 
-            // Generate rental_code (format: RENTAL-XXX)
             $latestRental = self::latest()->first();
             $number = $latestRental ? (int) substr($latestRental->rental_code, 7) + 1 : 1;
             $model->rental_code = 'RENTAL-' . str_pad($number, 3, '0', STR_PAD_LEFT);
         });
     }
 
-    // Accessor untuk duration (dihitung dari end_date - start_date)
     public function getDurationAttribute()
     {
         return $this->start_date->diffInDays($this->end_date);

@@ -26,6 +26,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::resource('rentals', RentalController::class);
 
+    Route::get('/rentals/export/excel', [RentalController::class, 'export'])->name('rentals.export');
+
     // Route untuk profile admin
     // Route untuk profile admin
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

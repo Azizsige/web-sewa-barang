@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
     public function index(Request $request)
     {
         $keyword = $request->query('keyword', '');
-        $perPage = $request->query('per_page', 10); // Default 10 kalau nggak dipilih
+        $perPage = $request->query('per_page', 10);
 
         $query = Category::withCount('products');
 
-        // Filter berdasarkan keyword (cari di nama atau slug kategori)
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', '%' . $keyword . '%')
@@ -22,10 +23,7 @@ class CategoryController extends Controller
             });
         }
 
-        // Urutkan berdasarkan created_at terbaru
         $query->orderBy('created_at', 'desc');
-
-        // Pagination
         $categories = $query->paginate($perPage);
         $categories->appends(['keyword' => $keyword, 'per_page' => $perPage]);
 
@@ -59,11 +57,21 @@ class CategoryController extends Controller
             $imagePath = $request->file('image')->store('categories', 'public');
         }
 
-        Category::create([
+        $category = Category::create([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'image' => $imagePath,
         ]);
+
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'created',
+                'model_type' => 'Category',
+                'model_id' => $category->id,
+                'description' => 'Admin ' . auth()->user()->name . ' menambah category ' . $category->name,
+            ]);
+        }
 
         return redirect()->route('categories.index')->with('success', 'Kategori berhasil ditambahkan.');
     }
@@ -94,6 +102,7 @@ class CategoryController extends Controller
             'description' => $request->description,
         ];
 
+        $oldCategory = $category->replicate();
         if ($request->hasFile('image')) {
             if ($category->image) {
                 \Storage::disk('public')->delete($category->image);
@@ -102,6 +111,20 @@ class CategoryController extends Controller
         }
 
         $category->update($data);
+        $newCategory = $category->refresh();
+
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            $changes = array_diff_assoc($newCategory->getAttributes(), $oldCategory->getAttributes());
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'model_type' => 'Category',
+                'model_id' => $category->id,
+                'old_values' => array_intersect_key($oldCategory->getAttributes(), $changes),
+                'new_values' => array_intersect_key($newCategory->getAttributes(), $changes),
+                'description' => 'Admin ' . auth()->user()->name . ' mengedit category ' . $category->name,
+            ]);
+        }
 
         return redirect()->route('categories.index')->with('success', 'Kategori berhasil diperbarui.');
     }
@@ -115,6 +138,17 @@ class CategoryController extends Controller
         if ($category->image) {
             \Storage::disk('public')->delete($category->image);
         }
+
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'model_type' => 'Category',
+                'model_id' => $category->id,
+                'description' => 'Admin ' . auth()->user()->name . ' menghapus category ' . $category->name,
+            ]);
+        }
+
         $category->delete();
         return redirect()->route('categories.index')->with('success', 'Kategori berhasil dihapus.');
     }

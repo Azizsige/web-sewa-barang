@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Models\ActivityLog;
 use App\Models\Category;
+use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Rental;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -18,20 +20,17 @@ class ProductController extends Controller
         $statusFilter = $request->query('status', 'all');
         $categoryId = $request->query('category_id', 'all');
         $keyword = $request->query('keyword', '');
-        $perPage = $request->query('per_page', 10); // Default 10 kalau nggak dipilih
+        $perPage = $request->query('per_page', 10);
         $query = Product::with('category', 'primaryImage')->orderBy('created_at', 'desc');
 
-        // Filter berdasarkan status
         if ($statusFilter !== 'all') {
             $query->where('status', $statusFilter);
         }
 
-        // Filter berdasarkan kategori
         if ($categoryId !== 'all') {
             $query->where('category_id', $categoryId);
         }
 
-        // Filter berdasarkan keyword (cari di nama produk atau nama kategori)
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', '%' . $keyword . '%')
@@ -41,10 +40,7 @@ class ProductController extends Controller
             });
         }
 
-        // Ambil daftar kategori untuk dropdown
         $categories = Category::all();
-
-        // Pagination: Gunakan nilai per_page dari request
         $products = $query->paginate($perPage);
         $products->appends(['status' => $statusFilter, 'category_id' => $categoryId, 'keyword' => $keyword, 'per_page' => $perPage]);
 
@@ -119,7 +115,6 @@ class ProductController extends Controller
 
         $product = Product::create($validated);
 
-        // Simpan multiple gambar
         $images = $request->file('images');
         foreach ($images as $index => $image) {
             $path = $image->store('product_images', 'public');
@@ -129,6 +124,16 @@ class ProductController extends Controller
                 'image_path' => $path,
                 'is_primary' => $index === 0,
                 'order' => $index,
+            ]);
+        }
+
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'created',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'description' => 'Admin ' . auth()->user()->name . ' menambah product ' . $product->name,
             ]);
         }
 
@@ -186,9 +191,23 @@ class ProductController extends Controller
         ]);
 
         $validated['is_bundle'] = $request->has('is_bundle') ? 1 : 0;
+        $oldProduct = $product->replicate();
         $product->update($validated);
+        $newProduct = $product->refresh();
 
-        // Hapus gambar yang dipilih
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            $changes = array_diff_assoc($newProduct->getAttributes(), $oldProduct->getAttributes());
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'old_values' => array_intersect_key($oldProduct->getAttributes(), $changes),
+                'new_values' => array_intersect_key($newProduct->getAttributes(), $changes),
+                'description' => 'Admin ' . auth()->user()->name . ' mengedit product ' . $product->name,
+            ]);
+        }
+
         if ($request->has('delete_images')) {
             $deleteImages = $request->input('delete_images');
             $imagesToDelete = ProductImage::whereIn('id', $deleteImages)->where('product_id', $product->id)->get();
@@ -198,7 +217,6 @@ class ProductController extends Controller
             }
         }
 
-        // Upload gambar baru
         if ($request->hasFile('images')) {
             $images = $request->file('images');
             $hasPrimary = $product->images()->where('is_primary', true)->exists();
@@ -215,13 +233,11 @@ class ProductController extends Controller
             }
         }
 
-        // Update primary image
         if ($request->filled('primary_image_id')) {
             $product->images()->update(['is_primary' => false]);
             $product->images()->where('id', $request->input('primary_image_id'))->update(['is_primary' => true]);
         }
 
-        // Reorder images after deletion
         $remainingImages = $product->images()->orderBy('order')->get();
         foreach ($remainingImages as $index => $image) {
             $image->update(['order' => $index]);
@@ -232,33 +248,37 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        // Cek apakah produk digunakan di rental aktif
         $activeRentals = Rental::where('product_id', $product->id)
             ->whereIn('status', ['pending', 'ongoing'])
             ->exists();
 
         if ($activeRentals) {
-            // Jika request adalah AJAX, return JSON
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Produk ini sedang disewakan dan tidak dapat dihapus. Selesaikan atau batalkan sewa terlebih dahulu.',
                 ], 400);
             }
-            // Jika non-AJAX, redirect dengan flash message
             return redirect()->back()->with('error', 'Produk ini sedang disewakan dan tidak dapat dihapus. Selesaikan atau batalkan sewa terlebih dahulu.');
         }
 
-        // Hapus gambar terkait
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->image_path);
             $image->delete();
         }
 
-        // Hapus produk
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'description' => 'Admin ' . auth()->user()->name . ' menghapus product ' . $product->name,
+            ]);
+        }
+
         $product->delete();
 
-        // Jika request adalah AJAX, return JSON
         if (request()->wantsJson()) {
             return response()->json([
                 'success' => true,
@@ -266,14 +286,28 @@ class ProductController extends Controller
             ], 200);
         }
 
-        // Jika non-AJAX, redirect dengan flash message
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
     }
 
     public function toggleStatus(Request $request, Product $product)
     {
         $newStatus = $product->status === 'active' ? 'inactive' : 'active';
+        $oldProduct = $product->replicate();
         $product->update(['status' => $newStatus]);
+        $newProduct = $product->refresh();
+
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            $changes = array_diff_assoc($newProduct->getAttributes(), $oldProduct->getAttributes());
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'old_values' => array_intersect_key($oldProduct->getAttributes(), $changes),
+                'new_values' => array_intersect_key($newProduct->getAttributes(), $changes),
+                'description' => 'Admin ' . auth()->user()->name . ' mengubah status product ' . $product->name . ' menjadi ' . $newStatus,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -309,6 +343,16 @@ class ProductController extends Controller
             ProductImage::where('id', $imageId)
                 ->where('product_id', $product->id)
                 ->update(['order' => $index]);
+        }
+
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'description' => 'Admin ' . auth()->user()->name . ' mengubah urutan gambar product ' . $product->name,
+            ]);
         }
 
         return response()->json([

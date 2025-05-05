@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Rental;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -122,6 +123,15 @@ class RentalController extends Controller
         $tempFile = storage_path('app/public/' . $filename);
         $writer->save($tempFile);
 
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'exported',
+                'model_type' => 'Rental',
+                'description' => 'Admin ' . auth()->user()->name . ' mengekspor data rental.',
+            ]);
+        }
+
         return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
 
@@ -146,7 +156,7 @@ class RentalController extends Controller
             'product_id' => 'required|exists:products,id',
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after:start_date',
-            'proof_of_payment' => 'required|image|mimes:jpg,png|max:2048', // 2MB limit
+            'proof_of_payment' => 'required|image|mimes:jpg,png|max:2048',
         ]);
 
         try {
@@ -182,7 +192,6 @@ class RentalController extends Controller
                 $duration = $start_date->diffInDays($end_date);
                 $total_price = $product->price * $duration;
 
-                // Handle file upload
                 $proofOfPaymentPath = null;
                 if ($request->hasFile('proof_of_payment')) {
                     $proofOfPaymentPath = $request->file('proof_of_payment')->store('rentals/jaminan', 'public');
@@ -201,6 +210,16 @@ class RentalController extends Controller
                 ]);
 
                 $product->decrement('stock');
+
+                if (auth()->check() && auth()->user()->role === 'admin') {
+                    ActivityLog::create([
+                        'user_id' => auth()->id(),
+                        'action' => 'created',
+                        'model_type' => 'Rental',
+                        'model_id' => $rental->id,
+                        'description' => 'Admin ' . auth()->user()->name . ' menambah rental ' . $rental->rental_code,
+                    ]);
+                }
 
                 return $rental;
             });
@@ -298,6 +317,7 @@ class RentalController extends Controller
                 $duration = $start_date->diffInDays($end_date);
                 $total_price = $product->price * $duration;
 
+                $oldRental = $rental->replicate();
                 $rental->update([
                     'customer_name' => $request->customer_name,
                     'customer_email' => $request->customer_email,
@@ -308,6 +328,20 @@ class RentalController extends Controller
                     'total_price' => $total_price,
                     'status' => $request->status,
                 ]);
+                $newRental = $rental->refresh();
+
+                if (auth()->check() && auth()->user()->role === 'admin') {
+                    $changes = array_diff_assoc($newRental->getAttributes(), $oldRental->getAttributes());
+                    ActivityLog::create([
+                        'user_id' => auth()->id(),
+                        'action' => 'updated',
+                        'model_type' => 'Rental',
+                        'model_id' => $rental->id,
+                        'old_values' => array_intersect_key($oldRental->getAttributes(), $changes),
+                        'new_values' => array_intersect_key($newRental->getAttributes(), $changes),
+                        'description' => 'Admin ' . auth()->user()->name . ' mengedit rental ' . $rental->rental_code,
+                    ]);
+                }
 
                 return $rental;
             });
@@ -326,6 +360,16 @@ class RentalController extends Controller
 
         if ($rental->status === 'ongoing') {
             $rental->product->increment('stock');
+        }
+
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'model_type' => 'Rental',
+                'model_id' => $rental->id,
+                'description' => 'Admin ' . auth()->user()->name . ' menghapus rental ' . $rental->rental_code,
+            ]);
         }
 
         $rental->delete();

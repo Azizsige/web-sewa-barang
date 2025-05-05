@@ -6,6 +6,8 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Developer\DashboardController as DeveloperDashboardController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
@@ -21,7 +23,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('products', ProductController::class);
     Route::post('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
-    // Tambah route untuk updateImageOrder
     Route::post('products/{product}/update-image-order', [ProductController::class, 'updateImageOrder'])->name('products.updateImageOrder');
     Route::resource('categories', CategoryController::class);
     Route::resource('rentals', RentalController::class);
@@ -29,8 +30,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rentals/export/excel', [RentalController::class, 'export'])->name('rentals.export');
 
     // Route untuk profile admin
-    // Route untuk profile admin
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Route untuk developer (superadmin)
+Route::middleware(['auth', 'developer'])->group(function () {
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
+    Route::resource('admin-users', AdminUserController::class);
 });

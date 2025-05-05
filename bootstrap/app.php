@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Daftarkan route middleware
+        // Daftarkan route middlewareRouteServiceProvider
         $middleware->alias([
             'admin' => EnsureIsAdmin::class,
             'developer' => EnsureIsDeveloper::class,

@@ -74,7 +74,7 @@ class DashboardController extends Controller
             ));
         } elseif ($isDeveloper) {
             $shops = User::where('role', 'shop_owner')->get();
-            return view('dashboard', compact('isDeveloper', 'shops'));
+            return view('dashboard', compact('isAdmin', 'isDeveloper', 'shops'));
         }
 
         return view('dashboard', ['isAdmin' => false, 'isDeveloper' => false]);

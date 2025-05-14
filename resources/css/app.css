@@ -1,4 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* @import "flowbite/src/themes/default"; */
+
+@import "flowbite/src/themes/default";
+
+.swiper-slide {
+    opacity: 0.6;
+    transform: scale(0.9);
+    transition: all 0.3s ease-in-out;
+}
+
+.swiper-slide-active {
+    opacity: 1 !important;
+    transform: scale(1.05) !important;
+    z-index: 10;
+}

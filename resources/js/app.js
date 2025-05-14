@@ -22,6 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
         spaceBetween: 50,
         slidesPerView: 2, // << ini penting
         loop: true,
+        autoplay: {
+            delay: 2500,
+            disableOnInteraction: false,
+        },
         coverflowEffect: {
             rotate: 0,
             stretch: 0,

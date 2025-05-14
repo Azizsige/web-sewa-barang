@@ -8,14 +8,19 @@
     <title>Belajar FLowbite</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+    <style>
+        .swiper {
+            padding: 2rem 0 4rem 0 !important;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 w-[460px] mx-auto relative">
-    <nav class="sticky top-0 bg-blue-600 border-gray-200">
+    <nav class="sticky top-0 z-10 bg-blue-600 border-gray-200">
         <div class="flex flex-wrap items-center justify-between max-w-screen-xl p-4 mx-auto">
             <a href="https://flowbite.com/" class="flex items-center space-x-3 rtl:space-x-reverse">
                 <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" />
-                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Flowbite</span>
+                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Rentalin</span>
             </a>
             <button data-collapse-toggle="navbar-default" type="button"
                 class="inline-flex bg-[#FFFDF6] items-center hover:cursor-pointer p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
@@ -37,7 +42,7 @@
                     </li>
                     <li>
                         <a href="#"
-                            class="block px-3 py-2 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Products</a>
+                            class="block px-3 py-2 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Produk</a>
                     </li>
                 </ul>
             </div>
@@ -56,7 +61,7 @@
             </p>
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-3">
                 <a href="#"
-                    class="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:ring-blue-300">
+                    class="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-700 focus:ring-4 focus:ring-blue-300">
                     Sewa Sekarang
                     <svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 14 10">
@@ -73,15 +78,19 @@
     </section>
 
     {{-- 👉 Category --}}
-    <div class="h-[10rem] flex justify-center bg-white">
-        <div class="h-[100%] swiper">
+    <div class="h-[100%] flex justify-center bg-white">
+
+        <div class="h-[15rem] swiper">
+            <div>
+                <p class="mb-5 text-xl font-medium text-center text-gray-900">Kategori</p>
+            </div>
             <div class="swiper-wrapper">
                 @foreach (['Elektronik', 'Pakaian', 'Kamera', 'Motor', 'Laptop'] as $kategori)
                 <div class="swiper-slide w-[200px]"> {{-- ini penting: kasih width tetap --}}
                     <div
                         class="group h-[100px] hover:bg-green-500 hover:cursor-pointer p-3 text-center flex flex-col items-center justify-center gap-[5px] bg-white border border-gray-200 rounded-lg shadow-xl transition-transform duration-300">
                         <img src="https://flowbite.com/docs/images/logo.svg" class="h-20" alt="Flowbite Logo" />
-                        <p class="font-normal text-green-500 transition-colors duration-200 group-hover:text-white">
+                        <p class="font-normal text-black transition-colors duration-200 group-hover:text-white">
                             {{ $kategori }}
                         </p>
                     </div>
@@ -91,6 +100,218 @@
             {{-- <div class="mt-4 swiper-pagination"></div> --}}
         </div>
     </div>
+
+
+    {{-- 👉 Product --}}
+    <div class="container pt-10 pb-10 bg-white">
+        <div class="wrapper-product">
+            <div class="flex items-center justify-between px-3 mb-6 header-product">
+                <div class="header-product__title">
+                    <h1 class="text-xl font-medium text-center text-gray-900">Cari Barang Kamu </h1>
+                </div>
+                <div class="header-product_category">
+
+                    <button id="dropdownDefaultButton" data-dropdown-toggle="dropdown"
+                        class="text-black bg-white border border-grey-100 focus:ring-4 focus:outline-none focus:ring-blue-300 font-regular rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center  "
+                        type="button">Kategori <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m1 1 4 4 4-4" />
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown menu -->
+                    <div id="dropdown"
+                        class="z-10 hidden bg-white border border-green-500 divide-y divide-gray-100 rounded-lg shadow-sm w-44">
+                        <ul class="py-2 text-sm text-black " aria-labelledby="dropdownDefaultButton">
+                            <li>
+                                <a href="#"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Dashboard</a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Earnings</a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign
+                                    out</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center w-full gap-4 mx-auto text-center list-product">
+                <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm ">
+                    <a href="#">
+                        <img class="rounded-t-lg" src="https://flowbite.com/docs/images/blog/image-1.jpg" alt="" />
+                    </a>
+                    <div class="p-5">
+                        <a href="#">
+                            <h5 class="justify-start mb-2 text-2xl font-bold tracking-tight text-gray-900 text-start">
+                                Nama Barang
+                            </h5>
+                        </a>
+                        <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">Harga Barang</p>
+                        <div class="text-end">
+                            <a href="#"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                                Detail
+                                <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm ">
+                    <a href="#">
+                        <img class="rounded-t-lg" src="https://flowbite.com/docs/images/blog/image-1.jpg" alt="" />
+                    </a>
+                    <div class="p-5">
+                        <a href="#">
+                            <h5 class="justify-start mb-2 text-2xl font-bold tracking-tight text-gray-900 text-start">
+                                Nama Barang
+                            </h5>
+                        </a>
+                        <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">Harga Barang</p>
+                        <div class="text-end">
+                            <a href="#"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                                Detail
+                                <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm ">
+                    <a href="#">
+                        <img class="rounded-t-lg" src="https://flowbite.com/docs/images/blog/image-1.jpg" alt="" />
+                    </a>
+                    <div class="p-5">
+                        <a href="#">
+                            <h5 class="justify-start mb-2 text-2xl font-bold tracking-tight text-gray-900 text-start">
+                                Nama Barang
+                            </h5>
+                        </a>
+                        <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">Harga Barang</p>
+                        <div class="text-end">
+                            <a href="#"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                                Detail
+                                <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm ">
+                    <a href="#">
+                        <img class="rounded-t-lg" src="https://flowbite.com/docs/images/blog/image-1.jpg" alt="" />
+                    </a>
+                    <div class="p-5">
+                        <a href="#">
+                            <h5 class="justify-start mb-2 text-2xl font-bold tracking-tight text-gray-900 text-start">
+                                Nama Barang
+                            </h5>
+                        </a>
+                        <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">Harga Barang</p>
+                        <div class="text-end">
+                            <a href="#"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                                Detail
+                                <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm ">
+                    <a href="#">
+                        <img class="rounded-t-lg" src="https://flowbite.com/docs/images/blog/image-1.jpg" alt="" />
+                    </a>
+                    <div class="p-5">
+                        <a href="#">
+                            <h5 class="justify-start mb-2 text-2xl font-bold tracking-tight text-gray-900 text-start">
+                                Nama Barang
+                            </h5>
+                        </a>
+                        <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">Harga Barang</p>
+                        <div class="text-end">
+                            <a href="#"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                                Detail
+                                <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-see-more">
+                    <a href="#"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-600 border rounded-lg hover:text-gray-900 hover:bg-blue-700 hover:bg-gray-100 focus:ring-4 focus:ring-gray-400">
+                        Lihat Semua
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    {{-- 👉 Footer --}}
+
+
+    <footer class="bg-white border-t border-gray-200 shadow-sm ">
+        <div class="w-full max-w-screen-xl p-4 mx-auto md:py-8">
+            <div class="flex flex-col items-start justify-between gap-4">
+                <a href="https://flowbite.com/" class="flex items-center mb-4 space-x-3 sm:mb-0 rtl:space-x-reverse">
+                    <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" />
+                    <span class="self-center text-2xl font-semibold whitespace-nowrap ">Rentalin</span>
+                </a>
+                <ul class="flex flex-wrap items-center mb-6 text-sm font-medium text-gray-500 sm:mb-0 ">
+                    <li>
+                        <a href="#" class="hover:underline me-4 md:me-6">About</a>
+                    </li>
+                    <li>
+                        <a href="#" class="hover:underline me-4 md:me-6">Privacy Policy</a>
+                    </li>
+                    <li>
+                        <a href="#" class="hover:underline me-4 md:me-6">Licensing</a>
+                    </li>
+                    <li>
+                        <a href="#" class="hover:underline">Contact</a>
+                    </li>
+                </ul>
+            </div>
+            <hr class="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
+            <span class="block text-sm text-gray-500 sm:text-center ">© 2025 <a href="https://flowbite.com/"
+                    class="hover:underline">Rentalin™</a>. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+
 
 
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>

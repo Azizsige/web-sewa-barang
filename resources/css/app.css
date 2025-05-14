@@ -15,3 +15,7 @@
     transform: scale(1.05) !important;
     z-index: 10;
 }
+
+body {
+    font-family: "Open Sauce One", "Nunito Sans", -apple-system, sans-serif;
+}

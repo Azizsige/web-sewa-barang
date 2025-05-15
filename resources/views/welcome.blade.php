@@ -41,7 +41,7 @@
                             aria-current="page">Home</a>
                     </li>
                     <li>
-                        <a href="#"
+                        <a href="{{ route('produk') }}"
                             class="block px-3 py-2 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Produk</a>
                     </li>
                 </ul>
@@ -69,7 +69,7 @@
                             d="M1 5h12m0 0L9 1m4 4L9 9" />
                     </svg>
                 </a>
-                <a href="#"
+                <a href="{{ route('produk') }}"
                     class="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-white bg-blue-600 border rounded-lg hover:text-gray-900 hover:bg-blue-700 hover:bg-gray-100 focus:ring-4 focus:ring-gray-400">
                     Lihat Produk
                 </a>
@@ -85,13 +85,14 @@
                 <p class="mb-5 text-xl font-medium text-center text-gray-900">Kategori</p>
             </div>
             <div class="swiper-wrapper">
-                @foreach (['Elektronik', 'Pakaian', 'Kamera', 'Motor', 'Laptop'] as $kategori)
-                <div class="swiper-slide w-[200px]"> {{-- ini penting: kasih width tetap --}}
+                @foreach ($categories as $kategori)
+                <div class="swiper-slide w-[200px]">
                     <div
-                        class="group h-[100px] hover:bg-green-500 hover:cursor-pointer p-3 text-center flex flex-col items-center justify-center gap-[5px] bg-white border border-gray-200 rounded-lg shadow-xl transition-transform duration-300">
-                        <img src="https://flowbite.com/docs/images/logo.svg" class="h-20" alt="Flowbite Logo" />
-                        <p class="font-normal text-black transition-colors duration-200 group-hover:text-white">
-                            {{ $kategori }}
+                        class="group h-[100px] hover:bg-emerald-500 hover:cursor-pointer p-3 text-center flex flex-col items-center justify-center gap-[5px] bg-white border border-blue-200 rounded-lg shadow-xl transition-transform duration-300">
+                        <img src="{{ $kategori->image ?? 'https://flowbite.com/docs/images/logo.svg' }}" class="h-20"
+                            alt="{{ $kategori->name }} Icon" />
+                        <p class="font-normal text-blue-800 transition-colors duration-200 group-hover:text-white">
+                            {{ $kategori->name }}
                         </p>
                     </div>
                 </div>
@@ -269,7 +270,7 @@
                 </div>
 
                 <div class="button-see-more">
-                    <a href="#"
+                    <a href="{{ route('produk') }}"
                         class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-600 border rounded-lg hover:text-gray-900 hover:bg-blue-700 hover:bg-gray-100 focus:ring-4 focus:ring-gray-400">
                         Lihat Semua
                     </a>

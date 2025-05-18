@@ -79,7 +79,6 @@
 
     {{-- 👉 Category --}}
     <div class="h-[100%] flex justify-center bg-white">
-
         <div class="h-[15rem] swiper">
             <div>
                 <p class="mb-5 text-xl font-medium text-center text-gray-900">Kategori</p>
@@ -87,18 +86,17 @@
             <div class="swiper-wrapper">
                 @foreach ($categories as $kategori)
                 <div class="swiper-slide w-[200px]">
-                    <div
+                    <a href="{{ route('produk') }}?category={{ $kategori->slug }}"
                         class="group h-[100px] hover:bg-emerald-500 hover:cursor-pointer p-3 text-center flex flex-col items-center justify-center gap-[5px] bg-white border border-blue-200 rounded-lg shadow-xl transition-transform duration-300">
                         <img src="{{ $kategori->image ?? 'https://flowbite.com/docs/images/logo.svg' }}" class="h-20"
                             alt="{{ $kategori->name }} Icon" />
                         <p class="font-normal text-blue-800 transition-colors duration-200 group-hover:text-white">
                             {{ $kategori->name }}
                         </p>
-                    </div>
+                    </a>
                 </div>
                 @endforeach
             </div>
-            {{-- <div class="mt-4 swiper-pagination"></div> --}}
         </div>
     </div>
 

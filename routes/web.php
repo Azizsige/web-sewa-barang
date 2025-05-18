@@ -32,6 +32,8 @@ Route::get('/', function () {
 // Route AJAX untuk filter produk
 Route::get('/api/products', function () {
     $selectedCategory = request()->input('category');
+    $page = request()->input('page', 1); // Default page 1
+    $perPage = 5; // 5 produk per load
     $products = Product::with(['category', 'primaryImage', 'images'])
         ->active()
         ->when($selectedCategory, function ($query) use ($selectedCategory) {
@@ -40,13 +42,25 @@ Route::get('/api/products', function () {
             });
         })
         ->orderBy('created_at', 'desc')
-        ->take(5)
+        ->skip(($page - 1) * $perPage) // Offset berdasarkan page
+        ->take($perPage) // Ambil 5 per page
         ->get();
     return response()->json($products);
 })->name('api.products');
 
 Route::get('/produk', function () {
-    return view('landing.products');
+    $categories = Category::all();
+    $selectedCategory = request()->input('category');
+    $products = Product::with(['category', 'primaryImage', 'images'])
+        ->active()
+        ->when($selectedCategory, function ($query) use ($selectedCategory) {
+            return $query->whereHas('category', function ($q) use ($selectedCategory) {
+                $q->where('slug', $selectedCategory);
+            });
+        })
+        ->orderBy('created_at', 'desc')
+        ->get(); // Ambil semua produk, nggak dibatesin 5
+    return view('landing.products', compact('categories', 'products', 'selectedCategory'));
 })->name('produk');
 
 Route::get('/detail-produk/{slug}', function ($slug) {

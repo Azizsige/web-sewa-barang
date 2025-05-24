@@ -7,19 +7,92 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Rentalin - Produk</title>
   @vite(['resources/css/app.css', 'resources/js/app.js'])
-  <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  <!-- Preload Flowbite CSS -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+  </noscript>
   <style>
     .swiper {
       padding: 2rem 0 4rem 0 !important;
+    }
+
+    /* Placeholder abu-abu dengan animasi pulse */
+    .image-placeholder {
+      background-color: #e5e7eb;
+      /* Abu-abu muda */
+      position: relative;
+      overflow: hidden;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    .image-placeholder::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+
+    /* Sembunyikan placeholder pas gambar selesai load atau error */
+    img.loaded+.image-placeholder {
+      display: none;
+    }
+
+    /* Styling fallback untuk alt text kalo gambar gagal */
+    .image-container img[alt]:not([src])+.image-placeholder {
+      display: none;
+    }
+
+    .image-container img[alt]:not([src]) {
+      display: block;
+      text-align: center;
+      color: #6b7280;
+      font-style: italic;
+      padding: 1rem;
     }
   </style>
 </head>
 
 <body class="bg-gray-100 w-[460px] mx-auto relative">
+  <!-- Spinner Loading (Overlay untuk Render Awal) -->
+  <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div role="status">
+      <svg aria-hidden="true" class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+        viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+          fill="currentColor" />
+        <path
+          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+          fill="currentFill" />
+      </svg>
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+
   <nav class="sticky top-0 z-10 bg-blue-600 border-gray-200">
     <div class="flex flex-wrap items-center justify-between max-w-screen-xl p-4 mx-auto">
-      <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-        <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" />
+      <a href="{{ route('landing') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
+        <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" loading="lazy" />
         <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Rentalin</span>
       </a>
       <button data-collapse-toggle="navbar-default" type="button"
@@ -35,7 +108,7 @@
         <ul
           class="font-medium flex gap-[1rem] p-[1rem] flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
           <li class="mr-0 me-0 me-[0px]">
-            <a href="/"
+            <a href="{{ route('landing') }}"
               class="block px-3 py-2 text-white bg-blue-700 rounded-sm md:bg-transparent md:text-blue-700 dark:text-white md:dark:text-blue-500"
               aria-current="page">Home</a>
           </li>
@@ -89,7 +162,8 @@
       </div>
       <div id="product-list"
         class="flex flex-wrap justify-center w-full gap-4 mx-auto text-center list-product relative">
-        <div id="loading" class="hidden absolute inset-0 flex justify-center items-center z-10 bg-white bg-opacity-50">
+        <!-- Spinner untuk Fetch Produk -->
+        <div id="loading" class="absolute inset-0 flex justify-center items-center z-10 bg-white bg-opacity-50">
           <div role="status">
             <svg aria-hidden="true" class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
               viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -103,39 +177,7 @@
             <span class="sr-only">Loading...</span>
           </div>
         </div>
-        @if ($products->isEmpty())
-        <p class="text-gray-500">Tidak ada produk untuk kategori ini.</p>
-        @else
-        @foreach ($products as $product)
-        <div class="w-[17rem] bg-white border border-gray-200 rounded-lg shadow-sm">
-          <div class="flex justify-center items-center mt-2">
-            <img class="rounded-t-lg w-[12rem]" src="{{ asset('storage/' . $product->primaryImage->image_path) }}"
-              alt="{{ $product->name }}" />
-          </div>
-          <div class="p-5">
-            <a href="{{ route('produk.detail', ['slug' => $product->slug]) }}">
-              <h5 class="justify-start mb-2 text-xl font-bold tracking-tight text-gray-900 text-start">
-                {{ $product->name }}
-              </h5>
-            </a>
-            <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">
-              Rp {{ number_format($product->price ?? 0, 0, ',', '.') }}
-            </p>
-            <div class="text-end">
-              <a href="{{ route('produk.detail', ['slug' => $product->slug]) }}"
-                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
-                Detail
-                <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                  fill="none" viewBox="0 0 14 10">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M1 5h12m0 0L9 1m4 4L9 9" />
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-        @endforeach
-        @endif
+        <!-- Produk akan di-render via JS -->
       </div>
       <div id="see-more-button" class="button-see-more w-full flex justify-center mt-5 mb-5 hidden">
         <a href="#"
@@ -149,8 +191,8 @@
   <footer class="bg-white border-t border-gray-200 shadow-sm">
     <div class="w-full max-w-screen-xl p-4 mx-auto md:py-8">
       <div class="flex flex-col items-start justify-between gap-4">
-        <a href="/" class="flex items-center mb-4 space-x-3 sm:mb-0 rtl:space-x-reverse">
-          <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" />
+        <a href="{{ route('landing') }}" class="flex items-center mb-4 space-x-3 sm:mb-0 rtl:space-x-reverse">
+          <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" loading="lazy" />
           <span class="self-center text-2xl font-semibold whitespace-nowrap">Rentalin</span>
         </a>
         <ul class="flex flex-wrap items-center mb-6 text-sm font-medium text-gray-500 sm:mb-0">
@@ -169,122 +211,156 @@
         </ul>
       </div>
       <hr class="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
-      <span class="block text-sm text-gray-500 sm:text-center">© 2025 <a href="https://flowbite.com/"
+      <span class="block text-sm text-gray-500 sm:text-center">© 2025 <a href="{{ route('landing') }}"
           class="hover:underline">Rentalin™</a>. All Rights Reserved.</span>
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js" defer></script>
   <script>
+    // Data awal dari server-side
+    const initialProducts = @json($products->items());
+    const totalPages = @json($products->lastPage());
+
     document.addEventListener('DOMContentLoaded', function () {
-            const dropdownButton = document.getElementById('dropdownDefaultButton');
-            const dropdownItems = document.querySelectorAll('#dropdown a');
-            const productList = document.getElementById('product-list');
-            const seeMoreButton = document.getElementById('see-more-button');
-            const loadingSpinner = document.getElementById('loading');
-            let page = 1; // Mulai dari page 1
-            let currentCategory = '{{ $selectedCategory ?? '' }}'; // Kategori awal
+      const dropdownButton = document.getElementById('dropdownDefaultButton');
+      const dropdownItems = document.querySelectorAll('#dropdown a');
+      const productList = document.getElementById('product-list');
+      const seeMoreButton = document.getElementById('see-more-button');
+      const loadingSpinner = document.getElementById('loading');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      let page = 1;
+      let currentCategory = '{{ $selectedCategory ?? '' }}';
 
-            // Fungsi untuk load produk
-            function loadProducts(category, append = true) {
-                productList.classList.add('hidden');
-                loadingSpinner.classList.remove('hidden');
-                loadingSpinner.classList.add('flex');
+      // Fungsi untuk render produk
+      function renderProducts(products, append = false) {
+        if (!append) {
+          productList.innerHTML = ''; // Kosongkan kalau ganti kategori
+        }
 
-                fetch(`/api/products?category=${category}&page=${page}`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(products => {
-                    if (!append) {
-                        productList.innerHTML = ''; // Kosongkan list kalau ganti kategori
-                    }
+        if (products.length === 0 && page === 1) {
+          productList.innerHTML = '<p class="text-gray-500">Tidak ada produk untuk kategori ini.</p>';
+          seeMoreButton.classList.add('hidden');
+          return;
+        }
 
-                    if (products.length === 0 && page === 1) {
-                        productList.innerHTML = '<p class="text-gray-500">Tidak ada produk untuk kategori ini.</p>';
-                    } else if (products.length > 0) {
-                        products.forEach(product => {
-                            const productCard = `
-                                <div class="w-[17rem] bg-white border border-gray-200 rounded-lg shadow-sm">
-                                    <div class="flex justify-center items-center mt-2">
-                                        <img class="rounded-t-lg w-[12rem]"
-                                            src="/storage/${product.primary_image.image_path}"
-                                            alt="${product.name}" />
-                                    </div>
-                                    <div class="p-5">
-                                        <a href="/detail-produk/${product.slug}">
-                                            <h5 class="justify-start mb-2 text-xl font-bold tracking-tight text-gray-900 text-start">
-                                                ${product.name}
-                                            </h5>
-                                        </a>
-                                        <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">
-                                            Rp ${new Intl.NumberFormat('id-ID').format(product.price || 0)}
-                                        </p>
-                                        <div class="text-end">
-                                            <a href="/detail-produk/${product.slug}"
-                                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
-                                                Detail
-                                                <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true"
-                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-                                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
-                                                </svg>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            productList.innerHTML += productCard;
-                        });
-                        // Tampilkan button kalau ada data
-                        if (products.length === 5) {
-                            seeMoreButton.classList.remove('hidden');
-                        } else {
-                            seeMoreButton.classList.add('hidden');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching products:', error);
-                    productList.innerHTML = '<p class="text-red-500">Terjadi kesalahan saat memuat produk.</p>';
-                })
-                .finally(() => {
-                    productList.classList.remove('hidden');
-                    loadingSpinner.classList.add('hidden');
-                    loadingSpinner.classList.remove('flex');
-                });
-            }
-
-            // Load produk awal
-            loadProducts(currentCategory, false);
-
-            // Event dropdown
-            dropdownItems.forEach(item => {
-                item.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    page = 1; // Reset page ke 1
-                    const selectedText = this.textContent;
-                    dropdownButton.childNodes[0].textContent = selectedText;
-                    currentCategory = this.getAttribute('data-category');
-                    loadProducts(currentCategory, false);
-                });
-            });
-
-            // Event "Tampilkan Lainnya"
-            seeMoreButton.addEventListener('click', function (e) {
-                e.preventDefault();
-                page++; // Tambah page
-                loadProducts(currentCategory);
-            });
+        products.forEach((product, index) => {
+          // Gunakan loading="eager" untuk produk pertama (di atas fold)
+          const loadingAttr = index === 0 ? 'eager' : 'lazy';
+          const productCard = `
+            <div class="w-[17rem] bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div class="flex justify-center items-center mt-2 relative image-container">
+                <img class="rounded-t-lg w-[12rem]"
+                  src="/storage/${product.primary_image.image_path}"
+                  alt="${product.name}" 
+                  loading="${loadingAttr}"
+                  onload="this.classList.add('loaded')"
+                  onerror="this.classList.add('loaded')" />
+                <div class="image-placeholder rounded-t-lg w-[12rem] h-[12rem]"></div>
+              </div>
+              <div class="p-5">
+                <a href="/detail-produk/${product.slug}">
+                  <h5 class="justify-start mb-2 text-xl font-bold tracking-tight text-gray-900 text-start">
+                    ${product.name}
+                  </h5>
+                </a>
+                <p class="mb-3 font-normal text-gray-700 text-start dark:text-gray-400">
+                  Rp ${new Intl.NumberFormat('id-ID').format(product.price || 0)}
+                </p>
+                <div class="text-end">
+                  <a href="/detail-produk/${product.slug}"
+                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-500 rounded-lg hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                    Detail
+                    <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                        stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+          productList.innerHTML += productCard;
         });
+
+        // Kontrol "Tampilkan Lainnya"
+        if (page < totalPages) {
+          seeMoreButton.classList.remove('hidden');
+        } else {
+          seeMoreButton.classList.add('hidden');
+        }
+      }
+
+      // Fungsi untuk load produk via AJAX
+      function loadProducts(category, append = true) {
+        productList.classList.add('hidden');
+        loadingSpinner.classList.remove('hidden');
+        loadingSpinner.classList.add('flex');
+
+        fetch(`/api/products?category=${category}&page=${page}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(products => {
+          renderProducts(products, append);
+        })
+        .catch(error => {
+          console.error('Error fetching products:', error);
+          productList.innerHTML = '<p class="text-red-500">Terjadi kesalahan saat memuat produk.</p>';
+          seeMoreButton.classList.add('hidden');
+        })
+        .finally(() => {
+          productList.classList.remove('hidden');
+          loadingSpinner.classList.add('hidden');
+          loadingSpinner.classList.remove('flex');
+        });
+      }
+
+      // Render produk awal dari server-side
+      renderProducts(initialProducts, false);
+
+      // Sembunyiin overlay pas DOM selesai load
+      loadingOverlay.classList.add('hidden');
+
+      // Kontrol loading saat navigasi ke detail produk
+      document.querySelectorAll('a[href^="/detail-produk"]').forEach(link => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          loadingOverlay.classList.remove('hidden');
+          setTimeout(() => {
+            window.location.href = this.href;
+          }, 10);
+        });
+      });
+
+      // Event dropdown
+      dropdownItems.forEach(item => {
+        item.addEventListener('click', function (e) {
+          e.preventDefault();
+          page = 1; // Reset page ke 1
+          const selectedText = this.textContent;
+          dropdownButton.childNodes[0].textContent = selectedText;
+          currentCategory = this.getAttribute('data-category');
+          loadProducts(currentCategory, false);
+        });
+      });
+
+      // Event "Tampilkan Lainnya"
+      seeMoreButton.addEventListener('click', function (e) {
+        e.preventDefault();
+        page++; // Tambah page
+        loadProducts(currentCategory);
+      });
+    });
   </script>
 </body>
 

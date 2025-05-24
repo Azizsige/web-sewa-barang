@@ -11,12 +11,18 @@ use App\Http\Controllers\AdminUserController;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Cache;
 
 // Public Routes
 Route::get('/', function () {
-    $categories = Category::all();
+    $categories = Cache::remember('categories', 60 * 60, fn() => Category::select('id', 'name', 'slug', 'image')->get());
     $selectedCategory = request()->input('category');
-    $products = Product::with(['category', 'primaryImage', 'images'])
+    $products = Cache::remember("products_{$selectedCategory}", 60 * 60, fn() => Product::select('id', 'name', 'slug', 'price', 'category_id', 'status')
+        ->with([
+            'category' => fn($query) => $query->select('id', 'name', 'slug'),
+            'primaryImage' => fn($query) => $query->select('id', 'product_id', 'image_path'),
+            'images' => fn($query) => $query->select('id', 'product_id', 'image_path', 'is_primary')->orderBy('order')
+        ])
         ->active()
         ->when($selectedCategory, function ($query) use ($selectedCategory) {
             return $query->whereHas('category', function ($q) use ($selectedCategory) {
@@ -25,7 +31,7 @@ Route::get('/', function () {
         })
         ->orderBy('created_at', 'desc')
         ->take(5)
-        ->get();
+        ->get());
     return view('welcome', compact('categories', 'products', 'selectedCategory'));
 })->name('landing');
 
@@ -49,9 +55,14 @@ Route::get('/api/products', function () {
 })->name('api.products');
 
 Route::get('/produk', function () {
-    $categories = Category::all();
+    $categories = Cache::remember('categories', 60 * 60, fn() => Category::select('id', 'name', 'slug')->get());
     $selectedCategory = request()->input('category');
-    $products = Product::with(['category', 'primaryImage', 'images'])
+    $products = Cache::remember("products_{$selectedCategory}_page_{request()->input('page', 1)}", 60 * 60, fn() => Product::select('id', 'name', 'slug', 'price', 'category_id', 'status')
+        ->with([
+            'category' => fn($query) => $query->select('id', 'name', 'slug'),
+            'primaryImage' => fn($query) => $query->select('id', 'product_id', 'image_path'),
+            'images' => fn($query) => $query->select('id', 'product_id', 'image_path', 'is_primary')->orderBy('order')
+        ])
         ->active()
         ->when($selectedCategory, function ($query) use ($selectedCategory) {
             return $query->whereHas('category', function ($q) use ($selectedCategory) {
@@ -59,12 +70,13 @@ Route::get('/produk', function () {
             });
         })
         ->orderBy('created_at', 'desc')
-        ->get(); // Ambil semua produk, nggak dibatesin 5
+        ->paginate(5));
     return view('landing.products', compact('categories', 'products', 'selectedCategory'));
 })->name('produk');
 
 Route::get('/detail-produk/{slug}', function ($slug) {
-    return view('landing.detail-produk', ['productSlug' => $slug]);
+    $product = Product::with(['category', 'primaryImage', 'images'])->where('slug', $slug)->firstOrFail();
+    return view('landing.detail-produk', compact('product'));
 })->name('produk.detail');
 
 // Auth Routes (dari Breeze)
